@@ -46,6 +46,8 @@ config.ini
 .env
 .env.*
 !.env.example
+.gitee-token
+.server-access.json
 
 # ====================== 6. 前端缓存（Vue / Node） ======================
 node_modules/
