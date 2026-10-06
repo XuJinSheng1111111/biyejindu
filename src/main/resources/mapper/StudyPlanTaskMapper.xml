@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.StudyPlanTaskMapper">
+
+    <select id="selectByAccountId" resultType="pojo.StudyPlanTask">
+        select id,
+               account_id,
+               title,
+               content,
+               category,
+               priority,
+               deadline,
+               done,
+               source_type,
+               source_id,
+               create_time,
+               update_time
+        from study_plan_task
+        where account_id = #{accountId}
+        order by done asc,
+                 (deadline is null) asc,
+                 deadline asc,
+                 create_time desc
+    </select>
+
+    <select id="selectByIdAndAccount" resultType="pojo.StudyPlanTask">
+        select id,
+               account_id,
+               title,
+               content,
+               category,
+               priority,
+               deadline,
+               done,
+               source_type,
+               source_id,
+               create_time,
+               update_time
+        from study_plan_task
+        where id = #{id}
+          and account_id = #{accountId}
+        limit 1
+    </select>
+
+    <select id="selectBySource" resultType="pojo.StudyPlanTask">
+        select id,
+               account_id,
+               title,
+               content,
+               category,
+               priority,
+               deadline,
+               done,
+               source_type,
+               source_id,
+               create_time,
+               update_time
+        from study_plan_task
+        where account_id = #{accountId}
+          and source_type = #{sourceType}
+          and source_id = #{sourceId}
+        limit 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into study_plan_task
+        (account_id, title, content, category, priority, deadline, done, source_type, source_id)
+        values
+        (#{accountId}, #{title}, #{content}, #{category}, #{priority}, #{deadline}, #{done}, #{sourceType}, #{sourceId})
+    </insert>
+
+    <update id="update">
+        update study_plan_task
+        set title = #{title},
+            content = #{content},
+            category = #{category},
+            priority = #{priority},
+            deadline = #{deadline},
+            update_time = now()
+        where id = #{id}
+          and account_id = #{accountId}
+          and source_type = 'manual'
+    </update>
+
+    <update id="updateDone">
+        update study_plan_task
+        set done = #{done},
+            update_time = now()
+        where id = #{id}
+          and account_id = #{accountId}
+    </update>
+
+    <delete id="delete">
+        delete from study_plan_task
+        where id = #{id}
+          and account_id = #{accountId}
+    </delete>
+
+</mapper>

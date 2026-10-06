@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#071b2b">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <title>毕业进度小管家｜毕业学分自查</title>
+    <meta name="description" content="一页完成培养方案与成绩文件上传、课程核对和毕业学分进度自查。">
+    <link rel="stylesheet" href="static/css/credit-audit.css?v=20261006-security-1">
+</head>
+<body>
+<a class="skip-link" href="#audit">跳到学分自查</a>
+
+<div class="scene-backdrop" aria-hidden="true">
+    <img src="static/image/graduation-whale-girl.png?v=20261006-cinematic" alt="">
+</div>
+
+<div class="page-shell">
+    <header class="masthead">
+        <a class="wordmark" href="#top" aria-label="毕业进度小管家首页">
+            毕业<span>进度</span>小管家
+        </a>
+    </header>
+
+    <main id="top">
+        <section class="hero-panel" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <h1 id="hero-title">毕业进度，<br><em>心里有谱</em></h1>
+                <div class="intro-actions">
+                    <a class="main-action" href="#audit">开始免费自查</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="glass-section" id="audit" aria-labelledby="audit-title">
+            <header class="section-heading">
+                <div>
+                    <h2 id="audit-title">上传材料，开始自查</h2>
+                </div>
+            </header>
+
+            <div class="identity-list" aria-label="培养方案信息">
+                <label><span>学校</span><input id="schoolInput" type="text" maxlength="60" value="韶关学院" autocomplete="organization"></label>
+                <label><span>专业</span><input id="majorInput" type="text" maxlength="80" placeholder="例如：信息与计算科学"></label>
+                <label><span>入学年级</span><input id="cohortInput" type="text" maxlength="4" inputmode="numeric" pattern="20\d{2}" placeholder="例如：2024"></label>
+            </div>
+
+            <div class="file-list">
+                <article class="file-row plan-row" data-upload="plan" tabindex="0" role="button" aria-label="选择人才培养方案">
+                    <input id="planFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt" aria-describedby="planFileHint" hidden>
+                    <div class="file-title">
+                        <h3>人才培养方案</h3>
+                    </div>
+                    <div class="file-controls">
+                        <div class="plan-choice">
+                            <select id="planLibrary" aria-label="选择服务器已有的人才培养方案"><option value="">从方案库选择</option></select>
+                        </div>
+                        <span class="file-state" id="planState">或点击上传新方案</span>
+                        <span class="file-hint" id="planFileHint">PDF · Word · Excel · HTML · CSV · TXT · 不超过 8 MB</span>
+                        <span class="cache-state" id="cacheState"></span>
+                    </div>
+                </article>
+
+                <article class="file-row score-row" data-upload="score" tabindex="0" role="button" aria-label="选择个人成绩文件">
+                    <input id="scoreFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt,.zip,application/zip" aria-describedby="scoreFileHint scorePageHelp" hidden>
+                    <div class="file-title">
+                        <h3>个人成绩文件</h3>
+                    </div>
+                    <div class="file-controls score-controls">
+                        <span class="file-state" id="scoreState">点击选择成绩文件或网页压缩包</span>
+                        <span class="file-hint" id="scoreFileHint">文档 · 网页 · ZIP · 不超过 8 MB</span>
+                        <span class="file-help" id="scorePageHelp">网页成绩单请将 HTML 与同名资源文件夹一起压缩为 ZIP 后上传</span>
+                    </div>
+                </article>
+            </div>
+
+            <div class="section-actions">
+                <button class="main-action" id="parseButton" type="button" disabled><span>解析并核对</span></button>
+                <label class="consent-line"><input id="privacyConsent" type="checkbox"><span>我已阅读并同意<a href="#" data-open-privacy>文件处理与隐私说明</a></span></label>
+            </div>
+        </section>
+
+        <section class="glass-section is-hidden" id="review" aria-labelledby="review-title">
+            <header class="section-heading compact">
+                <div><h2 id="review-title">核对识别结果</h2></div>
+            </header>
+            <div id="parseWarnings" class="is-hidden" aria-live="polite"></div>
+
+            <section class="data-section" aria-labelledby="module-heading">
+                <header><div><h3 id="module-heading">培养方案板块</h3></div></header>
+                <div class="table-scroll"><table><thead><tr><th>板块名称</th><th>要求学分</th><th>来源片段</th><th><span class="sr-only">操作</span></th></tr></thead><tbody id="moduleRows"></tbody></table></div>
+                <div class="table-action-row"><button class="inline-action" id="addModule" type="button">添加板块</button></div>
+            </section>
+
+            <section class="data-section" aria-labelledby="course-heading">
+                <header><div><h3 id="course-heading">已修课程</h3><span class="count-text" id="courseCount">0 门</span></div></header>
+                <div class="table-scroll"><table><thead><tr><th>课程名称</th><th>归属板块</th><th>学分</th><th>成绩</th><th>是否通过</th><th><span class="sr-only">操作</span></th></tr></thead><tbody id="courseRows"></tbody></table></div>
+                <div class="table-action-row"><button class="inline-action" id="addCourse" type="button">添加课程</button></div>
+            </section>
+
+            <div class="center-action"><button class="main-action" id="calculateButton" type="button">生成学分结果</button></div>
+        </section>
+
+        <section class="glass-section is-hidden" id="result" aria-labelledby="result-title">
+            <header class="section-heading compact">
+                <div><h2 id="result-title">毕业学分进度</h2></div>
+            </header>
+            <div class="result-summary">
+                <div class="progress-ring" id="progressRing"><div><strong id="progressPercent">0%</strong><span>总进度</span></div></div>
+                <div class="summary-copy"><span class="result-state" id="resultBadge">核验完成</span><h3 id="resultHeadline">还需补足 0 学分</h3>
+                    <dl class="summary-numbers"><div><dt>要求</dt><dd><strong id="requiredTotal">0</strong> 学分</dd></div><div><dt>已计入</dt><dd><strong id="earnedTotal">0</strong> 学分</dd></div><div><dt>待补</dt><dd><strong id="missingTotal">0</strong> 学分</dd></div></dl>
+                </div>
+            </div>
+            <div class="result-columns">
+                <section><header class="list-heading"><h3>板块明细</h3><span>超出板块要求的学分不跨板块抵扣</span></header><div class="module-results" id="moduleResults"></div></section>
+                <aside class="attention-note"><h3>优先关注</h3><ul id="attentionList"></ul></aside>
+            </div>
+            <div class="result-actions"><button class="inline-action" id="downloadButton" type="button">下载核验清单</button><button class="inline-action" id="restartButton" type="button">重新核验</button></div>
+            <p class="result-disclaimer">结果依据上传确认的数据计算，最终结果请以学校最终审核为准</p>
+        </section>
+    </main>
+
+    <footer class="site-footer" id="privacy-info">
+        <div><strong>毕业<span>进度</span>小管家</strong></div>
+        <p>毕业要求以所在学校最新人才培养方案和教务部门审核为准。</p>
+        <button class="footer-action" id="feedbackButton" type="button">问题反馈</button>
+    </footer>
+</div>
+
+<dialog id="privacyDialog" aria-labelledby="privacyTitle">
+    <div class="dialog-head"><h2 id="privacyTitle">文件处理与隐私说明</h2><button type="button" data-close-privacy aria-label="关闭">×</button></div>
+    <div class="dialog-body"><p>为生成本次学分自查结果，系统会读取你主动选择的人才培养方案、课程名称、成绩、学分和课程类别。</p><ul><li>无需注册，不收集账号密码。</li><li>个人成绩原文件仅在本次请求的服务器内存中解析，不写入数据库或上传目录。</li><li>培养方案先用文件指纹查询；服务器已有相同版本时不上传。新版本只保存结构化规则和文件指纹，原文件不保存。</li><li>所有核验均由本服务器的本地规则完成，不会把成绩或培养方案发送给第三方人工智能接口。</li><li>暂不支持成绩截图，请上传文档、网页文件或网页压缩包。</li><li>结果须由你核对，并以学校审核为准。</li></ul></div>
+    <div class="dialog-actions"><button class="main-action" type="button" data-close-privacy>我知道了</button></div>
+</dialog>
+
+<dialog id="feedbackDialog" aria-labelledby="feedbackTitle">
+    <form id="feedbackForm">
+        <div class="dialog-head"><h2 id="feedbackTitle">问题反馈</h2><button type="button" data-close-feedback aria-label="关闭">×</button></div>
+        <div class="dialog-body feedback-form">
+            <label><span>问题类型</span><select id="feedbackType"><option value="bug">功能问题</option><option value="parse">解析问题</option><option value="suggest">改进建议</option></select></label>
+            <label><span>问题描述</span><textarea id="feedbackContent" maxlength="2000" rows="6" required placeholder="请描述你遇到的问题"></textarea></label>
+            <label><span>联系方式（选填）</span><input id="feedbackContact" maxlength="100" type="text" placeholder="手机号或邮箱"></label>
+        </div>
+        <div class="dialog-actions"><button class="main-action" id="feedbackSubmit" type="submit">提交反馈</button></div>
+    </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="static/js/credit-audit.js?v=20261006-security-1" defer></script>
+</body>
+</html>

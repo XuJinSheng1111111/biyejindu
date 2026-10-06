@@ -1,0 +1,1397 @@
+<style>
+    .page-wrap {
+        min-height: 100%;
+        padding: 18px 22px 42px;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+        max-width: 1240px;
+        margin: 0 auto;
+        border-radius: 26px;
+        background:
+            radial-gradient(circle at 8% 4%, rgba(64, 158, 255, .12), transparent 30%),
+            radial-gradient(circle at 96% 12%, rgba(67, 233, 123, .10), transparent 28%),
+            linear-gradient(180deg, rgba(255, 255, 255, .54) 0%, rgba(255, 255, 255, 0) 34%);
+    }
+
+    [data-theme="dark"] .page-wrap {
+        background:
+            radial-gradient(circle at 8% 4%, rgba(64, 158, 255, .10), transparent 32%),
+            radial-gradient(circle at 96% 12%, rgba(67, 233, 123, .07), transparent 30%),
+            linear-gradient(180deg, rgba(30, 38, 56, .38) 0%, rgba(20, 25, 35, 0) 34%);
+    }
+
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 14px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        transition: transform .2s, box-shadow .25s;
+    }
+
+    .glass-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
+        transform: translateY(-3px);
+    }
+
+    [data-theme="dark"] .glass-card {
+        background: rgba(30, 38, 56, 0.6);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+    }
+
+
+    .info-cover {
+        --cover-bg: none;
+        height: clamp(300px, 31vw, 360px);
+        margin: 0;
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+        background-color: var(--primary-color);
+        background-image: var(--cover-bg),
+        radial-gradient(circle at 16% 18%, rgba(255, 255, 255, .24), transparent 34%),
+        radial-gradient(circle at 84% 24%, rgba(125, 211, 252, .34), transparent 38%),
+        linear-gradient(135deg, var(--profile-cover-start) 0%, var(--profile-cover-mid) 50%, var(--profile-cover-end) 100%);
+        background-size: cover, auto, auto, cover;
+        background-position: center;
+        box-shadow: 0 22px 56px rgba(31, 71, 116, .24);
+        transition: background-image .35s ease;
+    }
+
+    .info-cover::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        opacity: .22;
+        background-image: linear-gradient(rgba(255, 255, 255, .16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .16) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: linear-gradient(180deg, var(--mask-color), transparent 78%);
+        -webkit-mask-image: linear-gradient(180deg, var(--mask-color), transparent 78%);
+        pointer-events: none;
+    }
+
+    .info-cover::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        background: linear-gradient(180deg, rgba(8, 15, 35, .05) 0%, transparent 36%, rgba(8, 15, 35, .68) 100%);
+        pointer-events: none;
+    }
+
+    .info-cover.has-image::after {
+        opacity: .10;
+    }
+
+    [data-theme="dark"] .info-cover::before {
+        background: linear-gradient(180deg, rgba(0, 0, 0, .16) 0%, transparent 34%, rgba(0, 0, 0, .76) 100%);
+    }
+
+
+    .cover-brand {
+        position: absolute;
+        left: 28px;
+        top: 24px;
+        z-index: 5;
+        color: var(--white);
+        text-shadow: 0 2px 12px rgba(0, 0, 0, .32);
+    }
+
+
+
+    .cover-brand h2 {
+        margin: 12px 0 4px;
+        font-size: 30px;
+        line-height: 1.15;
+        letter-spacing: 1px;
+    }
+
+    .cover-brand p {
+        margin: 0;
+        font-size: 13px;
+        opacity: .88;
+    }
+
+    .cover-toolbar {
+        position: absolute;
+        right: 22px;
+        top: 22px;
+        bottom: auto;
+        z-index: 5;
+        display: flex;
+        gap: 10px;
+    }
+
+    .cover-action {
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, .28);
+        background: rgba(15, 23, 42, .38);
+        color: var(--white);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, .16);
+        transition: transform .2s ease, background .2s ease;
+    }
+
+    .cover-action:hover {
+        transform: translateY(-1px);
+        background: rgba(15, 23, 42, .58);
+    }
+
+    .cover-action.primary {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .cover-action.primary:hover {
+        background: var(--primary-color-hover);
+    }
+
+
+    .info-profile {
+        position: relative;
+        z-index: 2;
+        margin: -205px 24px 0;
+        padding: 0 0 22px;
+    }
+
+    .info-avatar-wrap {
+        text-align: center;
+    }
+
+    .info-avatar-box {
+        position: relative;
+        display: inline-block;
+    }
+
+    .info-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 5px solid var(--card-bg);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+        background: var(--hover-bg);
+        object-fit: cover;
+        display: block;
+        animation: fadeUp .5s ease both;
+    }
+
+    .info-avatar-empty {background: var(--hover-bg);}
+
+    [data-theme="dark"] .info-avatar {
+        border-color: var(--border-color);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .avatar-cam {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        z-index: 5;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid var(--card-bg);
+        font-size: 18px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(64, 158, 255, 0.45);
+        transition: all .22s ease;
+    }
+
+    .avatar-cam:hover {
+        background: var(--primary-color-hover);
+        transform: scale(1.05);
+    }
+
+    [data-theme="dark"] .avatar-cam {
+        border-color: var(--border-color);
+    }
+
+    .info-name-line {
+        margin-top: 14px;
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--white);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        animation: fadeUp .5s .08s ease both;
+    }
+
+    .info-signature {
+        margin-top: 6px;
+        font-size: 14px;
+        color: var(--white);
+        opacity: 0.92;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, .4);
+        animation: fadeUp .5s .16s ease both;
+    }
+
+
+    .info-tags {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeUp .5s .24s ease both;
+    }
+
+    .info-tags span {
+        font-size: 12px;
+        padding: 6px 16px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.35);
+        color: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        white-space: nowrap;
+        transition: all .2s ease;
+    }
+
+    .info-tags span:hover {
+        background: rgba(0, 0, 0, 0.5);
+        border-color: rgba(255, 255, 255, 0.28);
+        transform: translateY(-1px);
+    }
+
+    [data-theme="dark"] .info-tags span {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+
+    .info-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 34px 0 22px;
+    }
+
+    .stat-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 112px;
+        padding: 24px 20px;
+        overflow: hidden;
+        text-align: center;
+        animation: fadeUp .5s .3s ease both;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(64, 158, 255, .08), transparent 72%);
+        pointer-events: none;
+    }
+
+    [data-theme="dark"] .stat-card::before {
+        background: linear-gradient(180deg, rgba(64, 158, 255, .12), transparent 72%);
+    }
+
+    .stat-card .v,
+    .stat-card .l {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-card .v {
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .stat-card .l {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 6px;
+    }
+
+    [data-theme="dark"] .stat-card .l {
+        color: var(--text-secondary);
+    }
+
+    .stat-card.g .v {
+        color: var(--success-color);
+    }
+
+    .stat-card.o .v {
+        color: var(--warning-color);
+    }
+
+
+    .info-trend, .info-desc {
+        padding: 22px 26px;
+        margin-bottom: 20px;
+        animation: fadeUp .5s .38s ease both;
+    }
+
+    .info-content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(340px, .9fr);
+        gap: 20px;
+        align-items: stretch;
+        margin-bottom: 4px;
+    }
+
+    .info-content-grid .info-trend,
+    .info-content-grid .info-desc {
+        margin-bottom: 0;
+    }
+
+    .info-content-grid .info-trend {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    .info-content-grid .info-desc {
+        min-height: 100%;
+    }
+
+    .info-trend h3, .info-desc h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 14px;
+        padding-left: 10px;
+        border-left: 3px solid var(--primary-color);
+        display: flex;
+        align-items: center;
+    }
+
+    .trend-tip {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .info-trend h3,
+    [data-theme="dark"] .info-desc h3 {
+        color: var(--border-color);
+    }
+
+    .trend-chart {
+        width: 100%;
+        height: 320px;
+    }
+
+    .trend-empty {
+        text-align: center;
+        padding: 40px 0 30px;
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .loading-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 80px 0;
+    }
+
+
+    .crop-dialog .el-dialog__body {
+        padding: 10px 20px 20px;
+    }
+
+    .crop-wrap {
+        position: relative;
+        width: 100%;
+        height: 320px;
+        background: var(--sidebar-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    .crop-wrap img {
+        position: absolute;
+        left: 0;
+        top: 0;
+        cursor: grab;
+        max-width: none;
+        pointer-events: none;
+    }
+
+    .crop-wrap:active img {
+        cursor: grabbing;
+    }
+
+    .crop-mask {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        aspect-ratio: 3 / 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 92%;
+        border-radius: 4px;
+    }
+
+    .crop-tip {
+        margin-top: 12px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+
+    .profile-edit-dialog {
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .profile-edit-dialog .el-dialog__header {
+        margin: 0;
+        padding: 22px 26px 14px;
+        border-bottom: 1px solid var(--bg-color);
+    }
+
+    .profile-edit-dialog .el-dialog__body {
+        padding: 18px 26px 8px;
+    }
+
+    .profile-edit-dialog .el-dialog__footer {
+        padding: 14px 26px 22px;
+        border-top: 1px solid var(--bg-color);
+    }
+
+    .profile-edit-tip {
+        margin-bottom: 16px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--primary-color-light);
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .profile-edit-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 18px;
+    }
+
+    .profile-edit-grid .span-2 {
+        grid-column: 1 / -1;
+    }
+
+    .profile-edit-grid .el-form-item {
+        margin-bottom: 18px;
+    }
+
+    .profile-edit-grid .el-form-item__label {
+        padding-bottom: 6px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .profile-edit-grid .el-select,
+    .profile-edit-grid .el-date-editor {
+        width: 100%;
+    }
+
+    [data-theme="dark"] .profile-edit-tip {
+        background: rgba(64, 158, 255, .12);
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .profile-edit-dialog .el-dialog__header,
+    [data-theme="dark"] .profile-edit-dialog .el-dialog__footer {
+        border-color: rgba(255, 255, 255, .08);
+    }
+    @media (max-width: 1180px) {
+        .info-content-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .trend-chart {
+            height: 280px;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .info-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .info-stats .stat-card:last-child {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .page-wrap {
+            padding: 14px 14px 32px;
+            border-radius: 20px;
+        }
+
+        .cover-toolbar {
+            top: 14px;
+            right: 14px;
+            flex-direction: column;
+        }
+
+        .cover-action {
+            height: 36px;
+            padding: 0 12px;
+            font-size: 12px;
+        }
+
+        .info-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .info-stats .stat-card:last-child {
+            grid-column: auto;
+        }
+
+        .info-cover {
+            height: 300px;
+            border-radius: 20px;
+        }
+
+        .info-profile {
+            margin: -185px 14px 0;
+        }
+
+        .info-avatar {
+            width: 110px;
+            height: 110px;
+        }
+
+        .info-content-grid {
+            gap: 14px;
+        }
+
+        .info-trend,
+        .info-desc {
+            padding: 18px;
+        }
+
+        .trend-chart {
+            height: 250px;
+        }
+    }
+</style>
+
+<div class="page-wrap">
+    <div id="infoApp">
+        <div class="loading-wrap" v-if="loading">
+            <el-icon class="is-loading" :size="32" color="var(--primary-color)">
+                <Loading/>
+            </el-icon>
+            <span style="margin-left:10px;color:var(--text-secondary);">加载中...</span>
+        </div>
+
+        <template v-else>
+
+            <div class="info-cover" :class="{'has-image': !!coverUrl}">
+                <div class="cover-brand">
+                    <p>让学习轨迹与个人形象一目了然</p>
+                </div>
+                <div class="cover-toolbar">
+                    <button class="cover-action" @click="triggerCoverUpload">
+                        <el-icon><Camera/></el-icon>
+                        更换背景
+                    </button>
+                    <button class="cover-action primary" @click="openEdit">
+                        <el-icon><Edit/></el-icon>
+                        编辑资料
+                    </button>
+                </div>
+                <input ref="coverInput" type="file" accept=".jpg,.jpeg,.png,.gif" style="display:none;" @change="onCoverSelect"/>
+            </div>
+
+            <div class="info-profile">
+                <div class="info-avatar-wrap">
+                    <div class="info-avatar-box">
+                        <img v-if="avatarUrl" class="info-avatar" :src="avatarUrl" @error="onAvatarError" alt="头像"/>
+                        <div v-else class="info-avatar info-avatar-empty" aria-hidden="true"></div>
+                        <div class="avatar-cam" @click="triggerAvatarUpload" title="更换头像">
+                            <el-icon>
+                                <Camera/>
+                            </el-icon>
+                        </div>
+                        <input ref="avatarInput" type="file" accept=".jpg,.jpeg,.png,.gif" style="display:none;"
+                               @change="onAvatarChange"/>
+                    </div>
+                    <div v-if="account.nickname || account.realName" class="info-name-line">
+                        {{ account.nickname || account.realName }}
+                        <el-tag v-if="account.gender" size="small"
+                                :type="account.gender === '男' ? 'primary' : 'danger'" effect="dark">
+                            {{ account.gender === '男' ? '♂' : '♀' }}
+                        </el-tag>
+                    </div>
+                    <div class="info-signature">"{{ account.signature || '这个人很懒，什么都没写~' }}"</div>
+                    <div class="info-tags">
+                        <span v-if="account.major">{{ account.major }}</span>
+                        <span v-if="account.className">{{ account.className }}</span>
+                        <span v-if="account.enrollYear">{{ account.enrollYear }}级</span>
+                    </div>
+                </div>
+
+
+                <div class="info-stats">
+                    <div class="stat-card glass-card">
+                        <div class="v">{{ stats.credit }}</div>
+                        <div class="l">已修学分</div>
+                    </div>
+                    <div class="stat-card glass-card g">
+                        <div class="v">{{ stats.avgScore }}</div>
+                        <div class="l">加权平均分</div>
+                    </div>
+                    <div class="stat-card glass-card o">
+                        <div class="v">{{ stats.gpa }}</div>
+                        <div class="l">绩点 GPA</div>
+                    </div>
+                </div>
+
+
+                <div class="info-content-grid">
+                    <div class="info-trend glass-card">
+                    <h3>绩点走势<span class="trend-tip">近5学期 · 与综合成绩页实时同步</span></h3>
+                    <div id="gpaTrendChart" class="trend-chart" v-show="hasTrend"></div>
+                    <div class="trend-empty" v-show="!hasTrend">
+                        <el-icon :size="30" color="var(--text-secondary)">
+                            <TrendCharts/>
+                        </el-icon>
+                        <p>暂无学期数据，前往「综合成绩」页查询后自动同步</p>
+                    </div>
+                </div>
+
+
+                <div class="info-desc glass-card">
+                    <h3>基本信息</h3>
+                    <el-descriptions :column="2" border size="default">
+                        <el-descriptions-item label="学号">{{ account.stuId || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="姓名">{{ account.realName || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="性别">{{ account.gender || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="生日">{{ account.birthday || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="手机号">{{ account.phone || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="邮箱">{{ account.email || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="专业">{{ account.major || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="班级">{{ account.className || '--' }}</el-descriptions-item>
+                        <el-descriptions-item label="入学年份" :span="2">{{ account.enrollYear || '--' }}
+                        </el-descriptions-item>
+                    </el-descriptions>
+                </div>
+                </div>
+            </div>
+        </template>
+
+
+        <el-dialog v-model="editVisible" title="编辑个人资料" width="760px"
+                   class="profile-edit-dialog" :close-on-click-modal="false">
+            <div class="profile-edit-tip">
+                以下资料与“基本信息”保持一致；邮箱用于登录，暂不支持在此修改。
+            </div>
+            <el-form :model="editForm" label-position="top" class="profile-edit-form">
+                <div class="profile-edit-grid">
+                    <el-form-item label="学号">
+                        <el-input v-model="editForm.stuId" placeholder="请输入学号" maxlength="20"></el-input>
+                    </el-form-item>
+                    <el-form-item label="姓名">
+                        <el-input v-model="editForm.realName" placeholder="请输入姓名" maxlength="20"></el-input>
+                    </el-form-item>
+                    <el-form-item label="性别">
+                        <el-select v-model="editForm.gender" placeholder="请选择性别">
+                            <el-option label="男" value="男"></el-option>
+                            <el-option label="女" value="女"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="生日">
+                        <el-date-picker v-model="editForm.birthday" type="date" value-format="YYYY-MM-DD"
+                                        placeholder="请选择生日"></el-date-picker>
+                    </el-form-item>
+                    <el-form-item label="手机号">
+                        <el-input v-model="editForm.phone" placeholder="请输入手机号" maxlength="11"></el-input>
+                    </el-form-item>
+                    <el-form-item label="邮箱">
+                        <el-input v-model="editForm.email" placeholder="登录邮箱" disabled></el-input>
+                    </el-form-item>
+                    <el-form-item label="专业">
+                        <el-input v-model="editForm.major" placeholder="请输入专业" maxlength="50"></el-input>
+                    </el-form-item>
+                    <el-form-item label="班级">
+                        <el-input v-model="editForm.className" placeholder="请输入班级" maxlength="50"></el-input>
+                    </el-form-item>
+                    <el-form-item label="入学年份">
+                        <el-input v-model="editForm.enrollYear" placeholder="例如：2023" maxlength="10"></el-input>
+                    </el-form-item>
+                    <el-form-item label="个性签名" class="span-2">
+                        <el-input v-model="editForm.signature" type="textarea" :rows="3"
+                                  placeholder="写点什么吧..." maxlength="100" show-word-limit></el-input>
+                    </el-form-item>
+                </div>
+            </el-form>
+            <template #footer>
+                <el-button @click="editVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveEdit" :loading="saving">保存资料</el-button>
+            </template>
+        </el-dialog>
+
+
+        <el-dialog v-model="cropVisible" title="裁剪封面" width="620px" class="crop-dialog"
+                   :close-on-click-modal="false">
+            <div class="crop-wrap" ref="cropWrap" @mousedown="startDrag" @wheel.prevent="scaleImg">
+                <img ref="cropImg" :src="cropSrc" draggable="false"/>
+                <div class="crop-mask"></div>
+            </div>
+            <div class="crop-tip">拖拽移动图片 · 滚轮缩放 · 3:1 比例适配封面</div>
+            <template #footer>
+                <el-button @click="cropVisible = false">取消</el-button>
+                <el-button type="primary" @click="confirmCrop" :loading="uploading">确认上传</el-button>
+            </template>
+        </el-dialog>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const CTX = '/student_system';
+        const LS = {
+            avatar: 'sams_avatar',
+            cover: 'sams_cover',
+            user: 'sams_userinfo',
+            stats: 'sams_scorestats'
+        };
+
+
+        const {createApp, reactive, ref, onMounted, onUnmounted, computed, nextTick} = Vue;
+        const {ElMessage} = ElementPlus;
+
+        const API = {
+            userInfo: `${CTX}/api/student/userInfo`,
+            profile: `${CTX}/api/student/profile`,
+            uploadAvatar: `${CTX}/api/student/avatar`,
+            uploadCover: `${CTX}/api/student/cover`
+        };
+
+
+        const dispatchEvent = (name, detail) => {
+            const evt = new CustomEvent(name, {detail});
+            window.dispatchEvent(evt);
+            if (window.top !== window) {
+                try {
+                    window.top.dispatchEvent(evt);
+                } catch (e) {
+                }
+            }
+        };
+        const addEvent = (name, handler) => {
+            window.addEventListener(name, handler);
+            if (window.top !== window) {
+                try {
+                    window.top.addEventListener(name, handler);
+                } catch (e) {
+                }
+            }
+        };
+        const removeEvent = (name, handler) => {
+            window.removeEventListener(name, handler);
+            if (window.top !== window) {
+                try {
+                    window.top.removeEventListener(name, handler);
+                } catch (e) {
+                }
+            }
+        };
+        const getStorage = key => {
+            try {
+                return JSON.parse(localStorage.getItem(key));
+            } catch (e) {
+                return null;
+            }
+        };
+        const getTopData = key => {
+            try {
+                return window.top?.[key] || null;
+            } catch (e) {
+                return null;
+            }
+        };
+
+        const app = createApp({
+            setup() {
+                const loading = ref(true);
+                const saving = ref(false);
+                const uploading = ref(false);
+                const account = reactive({
+                    stuId: '', realName: '', username: '', gender: '',
+                    birthday: '', phone: '', email: '',
+                    major: '', className: '', enrollYear: '', signature: '',
+                    avatar: '', avatarUrl: '', coverUrl: ''
+                });
+                const stats = reactive({credit: 0, avgScore: 0, gpa: 0});
+                const editVisible = ref(false);
+                const editForm = reactive({
+                    stuId: '', realName: '', gender: '', birthday: '', phone: '', email: '',
+                    major: '', className: '', enrollYear: '', signature: ''
+                });
+                const avatarInput = ref(null);
+                const coverInput = ref(null);
+
+                const trendData = ref([]);
+                const hasTrend = ref(false);
+                let trendChart = null;
+
+
+                const cropVisible = ref(false);
+                const cropSrc = ref('');
+                const cropWrap = ref(null);
+                const cropImg = ref(null);
+                let imgPos = {x: 0, y: 0, scale: 1};
+                let isDragging = false;
+                let startPos = {x: 0, y: 0};
+
+                const resolveAssetUrl = url => {
+                    if (!url) return '';
+                    const value = String(url).trim();
+                    if (/^(?:https?:|data:|blob:)/i.test(value)) return value;
+                    const normalized = value.replace(/^\/+/, '');
+                    const contextName = CTX.replace(/^\/+/, '');
+                    if (normalized === contextName || normalized.startsWith(contextName + '/')) {
+                        return '/' + normalized;
+                    }
+                    return CTX + '/' + normalized;
+                };
+
+
+                const avatarUrl = computed(() => {
+                    const source = account.avatar || account.avatarUrl || localStorage.getItem(LS.avatar);
+                    if (!source) return '';
+                    const resolved = resolveAssetUrl(source);
+                    return resolved.includes('?') ? `${resolved}&_t=${Date.now()}` : `${resolved}?_t=${Date.now()}`;
+                });
+                const coverUrl = ref('');
+
+
+                const setCoverImage = url => {
+                    const coverEl = document.querySelector('.info-cover');
+                    if (!coverEl) return;
+                    if (!url) {
+                        coverUrl.value = '';
+                        coverEl.style.removeProperty('--cover-bg');
+                        return;
+                    }
+                    const img = new Image();
+                    img.onload = () => {
+                        coverEl.style.setProperty('--cover-bg', `url(${url})`);
+                        coverUrl.value = url;
+                    };
+                    img.src = url;
+                };
+
+
+                const tweenToken = {};
+                const tween = (key, target, dec) => {
+                    const tk = tweenToken[key] = Symbol();
+                    const from = parseFloat(stats[key]) || 0;
+                    if (from === target) {
+                        stats[key] = target.toFixed(dec);
+                        return;
+                    }
+                    const t0 = performance.now(), dur = 700;
+                    const tick = t => {
+                        if (tweenToken[key] !== tk) return;
+                        const p = Math.min((t - t0) / dur, 1);
+                        stats[key] = (from + (target - from) * (1 - Math.pow(1 - p, 3))).toFixed(dec);
+                        if (p < 1) requestAnimationFrame(tick);
+                    };
+                    requestAnimationFrame(tick);
+                };
+
+
+                const buildTrendOption = list => {
+                    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    const axisColor = themeCssVar('--text-secondary');
+                    const splitColor = themeCssVar('--border-color-light');
+                    const labels = list.map(d => d.label);
+                    const gpas = list.map(d => d.gpa);
+                    const credits = list.map(d => d.credit);
+                    const avgGpa = +(gpas.reduce((s, v) => s + v, 0) / gpas.length).toFixed(2);
+
+                    return {
+                        animationDuration: 800,
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: ps => {
+                                const d = list[ps[0].dataIndex];
+                                let html = `<b>${d.label} 学期</b>`;
+                                ps.forEach(p => {
+                                    html += `<br/>${p.marker}${p.seriesName}：${p.value}${p.seriesIndex === 0 ? ' 学分' : ''}`;
+                                });
+                                return html;
+                            }
+                        },
+                        legend: {
+                            data: ['学期学分', '绩点'],
+                            top: 2, left: 'center',
+                            itemWidth: 14, itemHeight: 8, itemGap: 22,
+                            textStyle: {fontSize: 11, color: axisColor}
+                        },
+                        grid: {left: 10, right: 14, top: 42, bottom: 6, containLabel: true},
+                        xAxis: {
+                            type: 'category', data: labels,
+                            axisTick: {alignWithLabel: true},
+                            axisLabel: {fontSize: 12, color: axisColor},
+                            axisLine: {lineStyle: {color: splitColor}}
+                        },
+                        yAxis: [
+                            {
+                                type: 'value', name: 'GPA', min: 0, max: 5, interval: 1,
+                                nameGap: 12, nameTextStyle: {fontSize: 10, color: axisColor},
+                                axisLabel: {fontSize: 10, color: axisColor},
+                                splitLine: {lineStyle: {type: 'dashed', color: splitColor}}
+                            },
+                            {
+                                type: 'value', name: '学分', min: 0,
+                                nameGap: 12, nameTextStyle: {fontSize: 10, color: themeCssVar('--success-color')},
+                                axisLabel: {fontSize: 10, color: themeCssVar('--success-color')},
+                                splitLine: {show: false}
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '学期学分', type: 'bar', yAxisIndex: 1,
+                                barWidth: 24, data: credits,
+                                itemStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {offset: 0, color: themeCssVar('--success-color')},
+                                        {offset: 1, color: 'rgba(103,194,58,.40)'}
+                                    ]),
+                                    borderRadius: [5, 5, 0, 0]
+                                },
+                                label: {
+                                    show: true, position: 'inside',
+                                    fontSize: 10, fontWeight: 600, color: themeCssVar('--card-bg'),
+                                    textShadowColor: 'rgba(0,0,0,.25)',
+                                    textShadowBlur: 2
+                                }
+                            },
+                            {
+                                name: '绩点', type: 'line', yAxisIndex: 0,
+                                smooth: true, data: gpas,
+                                symbol: 'circle', symbolSize: 9,
+                                lineStyle: {width: 3, color: themeCssVar('--primary-color'), shadowBlur: 8, shadowOffsetY: 4},
+                                itemStyle: {color: themeCssVar('--primary-color'), borderColor: themeCssVar('--card-bg'), borderWidth: 2},
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {offset: 0, color: 'rgba(64,158,255,.30)'},
+                                        {offset: 1, color: 'rgba(64,158,255,0)'}
+                                    ])
+                                },
+                                label: {
+                                    show: true, position: 'top',
+                                    fontSize: 11, fontWeight: 600, color: themeCssVar('--primary-color'),
+                                    formatter: p => p.value.toFixed(2)
+                                },
+                                markLine: {
+                                    silent: true, symbol: 'none',
+                                    lineStyle: {type: 'dashed', color: themeCssVar('--warning-color')},
+                                    label: {fontSize: 10, color: themeCssVar('--warning-color'), formatter: `平均 ${avgGpa}`},
+                                    data: [{yAxis: avgGpa}]
+                                }
+                            }
+                        ]
+                    };
+                };
+
+                const renderTrend = () => {
+                    if (typeof echarts === 'undefined') return;
+                    const list = trendData.value;
+                    hasTrend.value = list.length > 0;
+                    nextTick(() => {
+                        const el = document.getElementById('gpaTrendChart');
+                        if (!el || !list.length) return;
+                        trendChart = trendChart || echarts.init(el);
+                        trendChart.resize();
+                        trendChart.setOption(buildTrendOption(list), {notMerge: true});
+                    });
+                };
+
+                const onResize = () => trendChart && trendChart.resize();
+
+
+                const applyStats = s => {
+                    if (!s) return;
+                    tween('credit', Number(s.credit) || 0, 1);
+                    tween('avgScore', Number(s.avgScore) || 0, 2);
+                    tween('gpa', Number(s.gpa) || 0, 2);
+                    if (Array.isArray(s.trend)) {
+                        trendData.value = s.trend;
+                        renderTrend();
+                    }
+                };
+
+
+                const onAvatarError = e => {
+                    e.target.style.display = 'none';
+                    account.avatar = '';
+                    account.avatarUrl = '';
+                    localStorage.removeItem(LS.avatar);
+                };
+                const triggerAvatarUpload = () => avatarInput.value?.click();
+                const triggerCoverUpload = () => coverInput.value?.click();
+
+                const onAvatarChange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        e.target.value = '';
+                        return ElMessage.error('图片不能超过5MB');
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = ev => account.avatar = ev.target.result;
+                    reader.readAsDataURL(file);
+
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    axios.post(API.uploadAvatar, fd).then(res => {
+                        const r = res.data;
+                        if (r?.code === 200 && r.data) {
+                            const fullAvatarUrl = resolveAssetUrl(r.data);
+                            localStorage.setItem(LS.avatar, fullAvatarUrl);
+                            account.avatarUrl = r.data;
+                            account.avatar = fullAvatarUrl;
+                            dispatchEvent('avatarUpdated', { avatar: fullAvatarUrl });
+                            ElMessage.success('头像上传成功');
+                        } else {
+                            ElMessage.error(r?.msg || '上传失败');
+                            account.avatar = localStorage.getItem(LS.avatar) || account.avatarUrl || '';
+                        }
+                    }).catch(() => {
+                        ElMessage.error('上传失败');
+                        account.avatar = localStorage.getItem(LS.avatar) || account.avatarUrl || '';
+                    });
+                    e.target.value = '';
+                };
+
+
+
+                const onCoverSelect = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        ElMessage.error('背景图不能超过5MB');
+                        e.target.value = '';
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        cropSrc.value = ev.target.result;
+                        cropVisible.value = true;
+                        nextTick(() => initCrop());
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                };
+
+
+                const initCrop = () => {
+                    const img = cropImg.value;
+                    if (!img) return;
+                    img.onload = () => {
+                        const wrap = cropWrap.value;
+                        const wrapW = wrap.clientWidth;
+                        const wrapH = wrap.clientHeight;
+                        const imgW = img.naturalWidth;
+                        const imgH = img.naturalHeight;
+
+
+                        const cropRatio = 3;
+                        const cropW = wrapW * 0.92;
+                        const cropH = cropW / cropRatio;
+                        const scale = Math.max(cropW / imgW, cropH / imgH);
+
+                        imgPos.scale = scale;
+                        imgPos.x = (wrapW - imgW * scale) / 2;
+                        imgPos.y = (wrapH - imgH * scale) / 2;
+                        updateImgTransform();
+                    };
+                };
+
+                const updateImgTransform = () => {
+                    const img = cropImg.value;
+                    if (!img) return;
+                    img.style.transform = `translate(${imgPos.x}px, ${imgPos.y}px) scale(${imgPos.scale})`;
+                    img.style.transformOrigin = '0 0';
+                };
+
+
+                const startDrag = e => {
+                    isDragging = true;
+                    startPos.x = e.clientX - imgPos.x;
+                    startPos.y = e.clientY - imgPos.y;
+                    document.addEventListener('mousemove', onDrag);
+                    document.addEventListener('mouseup', stopDrag);
+                };
+                const onDrag = e => {
+                    if (!isDragging) return;
+                    imgPos.x = e.clientX - startPos.x;
+                    imgPos.y = e.clientY - startPos.y;
+                    updateImgTransform();
+                };
+                const stopDrag = () => {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', onDrag);
+                    document.removeEventListener('mouseup', stopDrag);
+                };
+
+
+                const scaleImg = e => {
+                    const delta = e.deltaY > 0 ? -0.08 : 0.08;
+                    const newScale = Math.max(0.5, Math.min(3, imgPos.scale + delta));
+                    const rect = cropImg.value.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    const ratio = newScale / imgPos.scale;
+                    imgPos.x -= mouseX * (ratio - 1);
+                    imgPos.y -= mouseY * (ratio - 1);
+                    imgPos.scale = newScale;
+                    updateImgTransform();
+                };
+
+
+                const confirmCrop = () => {
+                    uploading.value = true;
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const wrap = cropWrap.value;
+                    const img = cropImg.value;
+
+
+                    const cropW = wrap.clientWidth * 0.92;
+                    const cropH = cropW / 3;
+                    const cropX = (wrap.clientWidth - cropW) / 2;
+                    const cropY = (wrap.clientHeight - cropH) / 2;
+
+
+                    canvas.width = cropW * 2;
+                    canvas.height = cropH * 2;
+
+                    const drawW = img.naturalWidth * imgPos.scale * 2;
+                    const drawH = img.naturalHeight * imgPos.scale * 2;
+                    const drawX = (imgPos.x - cropX) * 2;
+                    const drawY = (imgPos.y - cropY) * 2;
+
+                    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+
+                    canvas.toBlob(blob => {
+                        const fd = new FormData();
+                        fd.append('file', blob, 'cover.jpg');
+
+
+                        setCoverImage(canvas.toDataURL('image/jpeg', 0.92));
+
+                        axios.post(API.uploadCover, fd).then(res => {
+                            const r = res.data;
+                            if (r?.code === 200 && r.data) {
+                                const fullCoverUrl = resolveAssetUrl(r.data);
+                                localStorage.setItem(LS.cover, fullCoverUrl);
+                                account.coverUrl = r.data;
+                                setCoverImage(fullCoverUrl);
+                                dispatchEvent('coverUpdated', {cover: fullCoverUrl});
+                                ElMessage.success('背景图更新成功');
+                                cropVisible.value = false;
+                            } else {
+                                ElMessage.error(r?.msg || '上传失败');
+                                setCoverImage(resolveAssetUrl(localStorage.getItem(LS.cover)));
+                            }
+                        }).catch(() => {
+                            ElMessage.error('网络异常，上传失败');
+                            setCoverImage(resolveAssetUrl(localStorage.getItem(LS.cover)));
+                        }).finally(() => uploading.value = false);
+                    }, 'image/jpeg', 0.92);
+                };
+
+
+                const openEdit = () => {
+                    Object.assign(editForm, {
+                        stuId: account.stuId || '',
+                        realName: account.realName || '',
+                        gender: account.gender || '',
+                        birthday: account.birthday || '',
+                        phone: account.phone || '',
+                        email: account.email || '',
+                        major: account.major || '',
+                        className: account.className || '',
+                        enrollYear: account.enrollYear || '',
+                        signature: account.signature || ''
+                    });
+                    editVisible.value = true;
+                };
+
+                const saveEdit = () => {
+                    if (editForm.phone && !/^1[3-9]\\d{9}$/.test(editForm.phone)) {
+                        ElMessage.warning("请输入正确的手机号");
+                        return;
+                    }
+                    saving.value = true;
+                    axios.post(API.profile, editForm).then(res => {
+                        const r = res.data;
+                        if (r?.code === 200) {
+                            Object.assign(account, editForm);
+                            const cache = getStorage(LS.user) || {};
+                            Object.assign(cache, editForm);
+                            localStorage.setItem(LS.user, JSON.stringify(cache));
+                            dispatchEvent('userInfoUpdated', {...account});
+                            ElMessage.success('资料更新成功');
+                            editVisible.value = false;
+                        } else if (r?.code === 401) {
+                            ElMessage.error('登录状态已失效，请重新登录');
+                            setTimeout(() => {
+                                window.top.location.href = CTX + '/login.html';
+                            }, 800);
+                        } else {
+                            ElMessage.error(r?.msg || '保存失败');
+                        }
+                    }).catch(() => {
+                        ElMessage.error('网络异常，资料未保存，请重试');
+                    }).finally(() => saving.value = false);
+                };
+
+
+                const onStatsUpdated = e => applyStats(e.detail);
+                const onAvatarUpdate = e => {
+                    if (e.detail?.avatar) {
+                        account.avatar = e.detail.avatar;
+                        account.avatarUrl = e.detail.avatar;
+                    }
+                };
+
+
+                onMounted(() => {
+                    const cachedUser = getTopData('__userInfo') || getStorage(LS.user);
+                    if (cachedUser) Object.assign(account, cachedUser);
+                    applyStats(getTopData('__scoreStats') || getStorage(LS.stats));
+
+                    axios.post(API.userInfo, {}).then(res => {
+                        const r = res.data;
+                        if (r?.code === 401) {
+                            ElMessage.error('登录状态已失效，请重新登录');
+                            setTimeout(() => {
+                                window.top.location.href = CTX + '/login.html';
+                            }, 800);
+                            return;
+                        }
+                        if (r?.code === 200 && r.data) {
+                            Object.assign(account, r.data);
+                            if (r.data.avatarUrl || r.data.avatar) {
+                                account.avatar = resolveAssetUrl(r.data.avatarUrl || r.data.avatar);
+                            } else {
+                                account.avatar = '';
+                                account.avatarUrl = '';
+                                localStorage.removeItem(LS.avatar);
+                            }
+                            if (r.data.coverUrl) {
+                                const fullCoverUrl = resolveAssetUrl(r.data.coverUrl);
+                                localStorage.setItem(LS.cover, fullCoverUrl);
+                                setCoverImage(fullCoverUrl);
+                            } else {
+                                account.coverUrl = '';
+                                localStorage.removeItem(LS.cover);
+                                setCoverImage('');
+                            }
+                            localStorage.setItem(LS.user, JSON.stringify(r.data));
+                            try {
+                                window.top.__userInfo = r.data;
+                            } catch (e) {
+                            }
+                            dispatchEvent('userInfoUpdated', {...account});
+                        }
+                    }).catch(() => {
+                        if (!account.realName && !account.stuId) {
+                            ElMessage.error('个人信息加载失败，请稍后重试');
+                        }
+                    });
+
+
+                    nextTick(() => {
+                        const saved = localStorage.getItem(LS.cover);
+                        if (saved) setCoverImage(resolveAssetUrl(saved));
+                    });
+
+                    addEvent('statsUpdated', onStatsUpdated);
+                    addEvent('avatarUpdated', onAvatarUpdate);
+                    window.addEventListener('resize', onResize);
+
+                    loading.value = false;
+                });
+
+                onUnmounted(() => {
+                    removeEvent('statsUpdated', onStatsUpdated);
+                    removeEvent('avatarUpdated', onAvatarUpdate);
+                    window.removeEventListener('resize', onResize);
+                    document.removeEventListener('mousemove', onDrag);
+                    document.removeEventListener('mouseup', stopDrag);
+                    trendChart?.dispose();
+                    trendChart = null;
+                });
+
+                return {
+                    loading, saving, uploading, account, stats, editVisible, editForm,
+                    avatarInput, coverInput, avatarUrl, coverUrl, hasTrend,
+                    cropVisible, cropSrc, cropWrap, cropImg,
+                    onAvatarError, triggerAvatarUpload, triggerCoverUpload,
+                    onAvatarChange, onCoverSelect,
+                    startDrag, scaleImg, confirmCrop,
+                    openEdit, saveEdit
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        for (const [k, c] of Object.entries(ElementPlusIconsVue)) {
+            app.component(k, c);
+        }
+        app.mount('#infoApp');
+    })();
+</script>

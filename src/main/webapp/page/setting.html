@@ -1,0 +1,700 @@
+<style>
+    .page-wrap {
+        padding: 24px;
+        max-width: 900px;
+        margin: 0 auto;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--text-primary);
+    }
+
+    .setting-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .setting-card {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 4px 24px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.06));
+    }
+
+    .setting-card h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 20px 0 14px;
+        padding-left: 10px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 14px 0;
+        border-top: 1px solid var(--border-color-light);
+    }
+
+    .setting-row:first-of-type {
+        border-top: none;
+    }
+
+    .setting-row .r-label {
+        font-size: 14px;
+        color: var(--text-primary);
+    }
+
+    .setting-row .r-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+        line-height: 1.6;
+    }
+
+    .setting-row .r-control {
+        flex-shrink: 0;
+    }
+
+    .theme-colors {
+        display: flex;
+        gap: 10px;
+    }
+
+    .theme-color {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: all .2s;
+    }
+
+    .theme-color.active {
+        border-color: var(--text-primary);
+        transform: scale(1.1);
+    }
+
+    .about-info {
+        padding: 4px 0 6px;
+        line-height: 2;
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .about-info p {
+        margin: 0;
+    }
+
+    .update-message {
+        margin: -4px 0 18px 10px;
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .update-message.available {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .about-info b {
+        color: var(--text-primary);
+        min-width: 90px;
+        display: inline-block;
+    }
+
+    .danger-text {
+        color: var(--danger-color);
+    }
+
+    @media (max-width: 700px) {
+        .page-wrap { padding: 16px; }
+        .setting-card { padding: 4px 16px; }
+        .setting-row { align-items: flex-start; flex-direction: column; gap: 10px; }
+        .setting-row .r-control { width: 100%; }
+        .setting-row .r-control .el-radio-group { display: flex; flex-wrap: wrap; }
+    }
+</style>
+
+<div class="page-wrap">
+    <div id="settingApp">
+        <div class="setting-title">系统设置</div>
+
+        <div class="setting-card">
+            <h3>基础设置</h3>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">主题模式</div>
+                    <div class="r-desc">切换浅色、深色或跟随系统</div>
+                </div>
+                <div class="r-control">
+                    <el-radio-group v-model="form.theme" @change="saveTheme">
+                        <el-radio-button value="light">浅色</el-radio-button>
+                        <el-radio-button value="dark">深色</el-radio-button>
+                        <el-radio-button value="auto">跟随系统</el-radio-button>
+                    </el-radio-group>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">主题色</div>
+                    <div class="r-desc">选择界面主色调</div>
+                </div>
+                <div class="r-control">
+                    <div class="theme-colors">
+                        <div v-for="c in themeColors" :key="c.v" class="theme-color"
+                             :class="{active: form.themeColor === c.v}"
+                             :style="{background: c.c}" @click="pickColor(c.v)"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">字号</div>
+                    <div class="r-desc">调整系统基础字体大小</div>
+                </div>
+                <div class="r-control">
+                    <el-radio-group v-model="form.fontSize" @change="saveFont">
+                        <el-radio-button value="normal">标准</el-radio-button>
+                        <el-radio-button value="large">大</el-radio-button>
+                        <el-radio-button value="xlarge">超大</el-radio-button>
+                    </el-radio-group>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-card">
+            <h3>数据备份与管理</h3>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">导出全部成绩</div>
+                    <div class="r-desc">下载包含全部学期的成绩 Excel 文件</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="primary" plain :loading="busyAction === 'scores'" @click="exportScores">导出成绩</el-button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">导出学业总结</div>
+                    <div class="r-desc">汇总单学期和全学期学业总结</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="primary" plain :loading="busyAction === 'summaries'" @click="exportSummaries">导出总结</el-button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label danger-text">清空学业数据</div>
+                    <div class="r-desc">删除全部成绩、学业总结和上传历史，保留账号与个人资料</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="danger" plain :loading="busyAction === 'clear'" @click="clearAcademicData">清空数据</el-button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">清除本地配置</div>
+                    <div class="r-desc">恢复默认主题、主题色、字号和登录有效期设置</div>
+                </div>
+                <div class="r-control">
+                    <el-button @click="resetLocalSettings">恢复默认</el-button>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-card">
+            <h3>账号与安全</h3>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">修改密码</div>
+                    <div class="r-desc">验证原密码后设置新密码</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="primary" plain @click="openPasswordDialog">修改密码</el-button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">登录有效期</div>
+                    <div class="r-desc">登录后保持会话的有效时长，下次登录生效</div>
+                </div>
+                <div class="r-control">
+                    <el-radio-group v-model="sessionDays" @change="saveSessionDays">
+                        <el-radio-button :value="7">7 天</el-radio-button>
+                        <el-radio-button :value="30">30 天</el-radio-button>
+                    </el-radio-group>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">新手指引</div>
+                    <div class="r-desc">重新查看系统功能和上传成绩单的操作说明</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="primary" plain @click="replayGuide">新手指引</el-button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label danger-text">注销账号</div>
+                    <div class="r-desc">永久删除账号及全部关联数据，此操作不可恢复</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="danger" @click="openDeleteDialog">注销账号</el-button>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-card">
+            <h3>关于系统</h3>
+            <div class="about-info">
+                <p><b>系统名称</b>学生智能学业管理系统</p>
+                <p><b>当前版本</b>V{{ currentVersion }}</p>
+                <p><b>开发者</b>Ondog</p>
+                <p><b>发布日期</b>2026-10</p>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="r-label">版本更新</div>
+                    <div class="r-desc">检查系统是否有新的可用版本</div>
+                </div>
+                <div class="r-control">
+                    <el-button type="primary" plain :loading="updateChecking" @click="checkUpdate">
+                        <el-icon><Refresh/></el-icon>
+                        检查更新
+                    </el-button>
+                </div>
+            </div>
+            <div v-if="updateMessage" class="update-message" :class="{ available: updateAvailable }">
+                {{ updateMessage }}
+            </div>
+        </div>
+
+        <el-dialog v-model="passwordDialog" title="修改登录密码" width="500px" :close-on-click-modal="false">
+            <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="90px">
+                <el-form-item label="原密码" prop="oldPwd">
+                    <el-input v-model="passwordForm.oldPwd" type="password" show-password autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="新密码" prop="newPwd">
+                    <el-input v-model="passwordForm.newPwd" type="password" show-password autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="确认密码" prop="checkPwd">
+                    <el-input v-model="passwordForm.checkPwd" type="password" show-password autocomplete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="passwordDialog = false">取消</el-button>
+                <el-button type="primary" :loading="passwordSaving" @click="submitPassword">确认修改</el-button>
+            </template>
+        </el-dialog>
+
+        <el-dialog v-model="deleteDialog" title="注销账号" width="500px" :close-on-click-modal="false">
+            <el-alert type="error" :closable="false" show-icon
+                      title="注销后账号、成绩、学业总结和第三方绑定将永久删除，无法恢复。"></el-alert>
+            <el-form :model="deleteForm" label-width="90px" style="margin-top: 18px;">
+                <el-form-item label="当前密码">
+                    <el-input v-model="deleteForm.password" type="password" show-password autocomplete="off" :disabled="deleteSaving"></el-input>
+                </el-form-item>
+                <el-form-item label="确认操作">
+                    <el-input v-model="deleteForm.confirmText" placeholder="请输入：注销账号" :disabled="deleteSaving" @keyup.enter="confirmDeleteAccount"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button :disabled="deleteSaving" @click="deleteDialog = false">取消</el-button>
+                <el-button type="danger" :loading="deleteSaving" :disabled="deleteSaving" @click="confirmDeleteAccount">永久注销</el-button>
+            </template>
+        </el-dialog>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const {createApp, reactive, ref, onMounted} = Vue;
+        const {ElMessage, ElMessageBox} = ElementPlus;
+        const CTX = '/student_system';
+        const STORAGE_KEY = 'sys_setting';
+        const LOGIN_SESSION_KEY = 'login_session_days';
+        const DEFAULT_FORM = {theme: 'light', themeColor: 'blue', fontSize: 'normal', sidebarCollapsed: false};
+
+        const API = {
+            exportScores: CTX + '/api/data/exportScores',
+            exportSummaries: CTX + '/api/data/exportSummaries',
+            clearAcademicData: CTX + '/api/data/clearAcademicData',
+            password: CTX + '/api/account/password',
+            deleteAccount: CTX + '/api/account/deleteAccount',
+            checkUpdate: CTX + '/api/data/checkUpdate',
+            settingsGet: CTX + '/api/settings/get',
+            settingsSave: CTX + '/api/settings/save'
+        };
+
+        const app = createApp({
+            setup() {
+                const themeColors = [
+                    {v: 'blue', c: '#409EFF'},
+                    {v: 'green', c: '#67C23A'},
+                    {v: 'orange', c: '#E6A23C'},
+                    {v: 'red', c: '#F56C6C'},
+                    {v: 'purple', c: '#9b59b6'}
+                ];
+                const form = reactive({...DEFAULT_FORM});
+                const sessionDays = ref(30);
+                const currentVersion = ref('1.0');
+                const latestVersion = ref('1.0');
+                const updateChecking = ref(false);
+                const updateMessage = ref('');
+                const updateAvailable = ref(false);
+                const busyAction = ref('');
+                const passwordDialog = ref(false);
+                const passwordSaving = ref(false);
+                const passwordFormRef = ref(null);
+                const passwordForm = reactive({oldPwd: '', newPwd: '', checkPwd: ''});
+                const deleteDialog = ref(false);
+                const deleteSaving = ref(false);
+                const deleteForm = reactive({password: '', confirmText: ''});
+                const mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+                const passwordRules = {
+                    oldPwd: [{required: true, message: '请输入原密码', trigger: 'blur'}],
+                    newPwd: [
+                        {required: true, message: '请输入新密码', trigger: 'blur'},
+                        {min: 6, max: 16, message: '密码长度应为 6-16 位', trigger: 'blur'}
+                    ],
+                    checkPwd: [
+                        {required: true, message: '请再次输入新密码', trigger: 'blur'},
+                        {
+                            validator: (rule, value, callback) => {
+                                if (value !== passwordForm.newPwd) {
+                                    callback(new Error('两次输入的密码不一致'));
+                                } else {
+                                    callback();
+                                }
+                            },
+                            trigger: 'blur'
+                        }
+                    ]
+                };
+
+                function normalizeSettings(value) {
+                    const raw = value && typeof value === 'object' ? value : {};
+                    const themes = ['light', 'dark', 'auto'];
+                    const colors = ['blue', 'green', 'orange', 'red', 'purple'];
+                    const fontSizes = ['normal', 'large', 'xlarge'];
+                    return {
+                        theme: themes.includes(raw.theme) ? raw.theme : DEFAULT_FORM.theme,
+                        themeColor: colors.includes(raw.themeColor) ? raw.themeColor : DEFAULT_FORM.themeColor,
+                        fontSize: fontSizes.includes(raw.fontSize) ? raw.fontSize : DEFAULT_FORM.fontSize,
+                        sidebarCollapsed: raw.sidebarCollapsed === true
+                    };
+                }
+
+                function saveLocal() {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                        theme: form.theme,
+                        themeColor: form.themeColor,
+                        fontSize: form.fontSize,
+                        sidebarCollapsed: Boolean(form.sidebarCollapsed)
+                    }));
+                }
+
+                function saveSettingsToServer() {
+                    const payload = {
+                        theme: form.theme,
+                        themeColor: form.themeColor,
+                        fontSize: form.fontSize,
+                        sidebarCollapsed: Boolean(form.sidebarCollapsed)
+                    };
+                    axios.post(API.settingsSave, payload).catch(() => {});
+                }
+
+                async function loadServerSettings() {
+                    try {
+                        const res = await axios.get(API.settingsGet, {timeout: 3000});
+                        if (res.data?.code !== 200 || !res.data.data) return;
+                        Object.assign(form, normalizeSettings(res.data.data));
+                        applyFont();
+                        applyTheme();
+                    } catch (e) {
+
+                    }
+                }
+
+                function applyTheme() {
+                    const root = document.documentElement;
+                    root.removeAttribute('data-theme');
+                    document.body.classList.remove('dark');
+
+                    let mode = form.theme;
+                    if (mode === 'auto') {
+                        mode = mql && mql.matches ? 'dark' : 'light';
+                    }
+                    if (mode === 'dark') {
+                        root.setAttribute('data-theme', 'dark');
+                        document.body.classList.add('dark');
+                    } else if (form.themeColor === 'green') {
+                        root.setAttribute('data-theme', 'green');
+                    }
+
+                    const colors = {
+                        blue: ['#409EFF', '#66b1ff', '#ecf5ff', '#1f2d3d'],
+                        green: ['#67C23A', '#85ce61', '#f0f9eb', '#1e3524'],
+                        orange: ['#E6A23C', '#ebb563', '#fdf6ec', '#3a2f1f'],
+                        red: ['#F56C6C', '#f78989', '#fef0f0', '#3a2024'],
+                        purple: ['#9b59b6', '#b37bcb', '#f5eef8', '#2f2338']
+                    };
+                    const color = colors[form.themeColor] || colors.blue;
+                    root.style.setProperty('--primary-color', color[0]);
+                    root.style.setProperty('--el-color-primary', color[0]);
+                    root.style.setProperty('--el-color-primary-light-3', color[1]);
+                    root.style.setProperty('--primary-color-hover', color[1]);
+                    root.style.setProperty('--primary-color-light', mode === 'dark' ? color[3] : color[2]);
+                    localStorage.setItem('sams_theme', form.theme);
+                    window.dispatchEvent(new CustomEvent('themeUpdated', {
+                        detail: {theme: form.theme, themeColor: form.themeColor, fontSize: form.fontSize}
+                    }));
+                    saveLocal();
+                }
+
+                function applyFont() {
+                    const size = {normal: '14px', large: '15px', xlarge: '17px'}[form.fontSize] || '14px';
+                    document.documentElement.style.setProperty('--app-font-size', size);
+                    document.documentElement.style.fontSize = size;
+                    saveLocal();
+                }
+
+                function saveTheme() {
+                    applyTheme();
+                    saveSettingsToServer();
+                }
+
+                function saveFont() {
+                    applyFont();
+                    saveSettingsToServer();
+                }
+
+                function pickColor(value) {
+                    form.themeColor = value;
+                    applyTheme();
+                    saveSettingsToServer();
+                    ElMessage.success('主题色已保存');
+                }
+
+                function saveSessionDays(value) {
+                    localStorage.setItem(LOGIN_SESSION_KEY, String(value));
+                    ElMessage.success('登录有效期已保存，下次登录生效');
+                }
+
+                function resetLocalSettings() {
+                    ElMessageBox.confirm('恢复默认主题、字号和登录有效期？', '恢复默认配置', {type: 'warning'})
+                        .then(() => {
+                            Object.assign(form, DEFAULT_FORM);
+                            sessionDays.value = 30;
+                            localStorage.setItem(LOGIN_SESSION_KEY, '30');
+                            applyFont();
+                            applyTheme();
+                            saveSettingsToServer();
+                            ElMessage.success('本地配置已恢复默认');
+                        })
+                        .catch(() => {});
+                }
+
+                function openPasswordDialog() {
+                    passwordForm.oldPwd = '';
+                    passwordForm.newPwd = '';
+                    passwordForm.checkPwd = '';
+                    passwordDialog.value = true;
+                }
+
+                function submitPassword() {
+                    passwordFormRef.value.validate(async valid => {
+                        if (!valid) return;
+                        passwordSaving.value = true;
+                        try {
+                            const res = await axios.put(API.password, {
+                                oldPwd: passwordForm.oldPwd,
+                                newPwd: passwordForm.newPwd
+                            });
+                            const result = res.data;
+                            if (result?.code === 200) {
+                                passwordDialog.value = false;
+                                ElMessage.success('密码修改成功，请重新登录');
+                                setTimeout(() => location.href = CTX + '/login.html', 1000);
+                                return;
+                            }
+                            ElMessage.error(result?.msg || '密码修改失败');
+                        } catch (err) {
+                            ElMessage.error(err.response?.data?.msg || '网络异常，请稍后重试');
+                        } finally {
+                            passwordSaving.value = false;
+                        }
+                    });
+                }
+
+                function replayGuide() {
+                    window.dispatchEvent(new CustomEvent('openGuide'));
+                }
+
+                function openDeleteDialog() {
+                    deleteForm.password = '';
+                    deleteForm.confirmText = '';
+                    deleteDialog.value = true;
+                }
+
+                async function confirmDeleteAccount() {
+                    if (deleteForm.confirmText.trim() !== '注销账号') {
+                        ElMessage.warning('请输入“注销账号”以确认操作');
+                        return;
+                    }
+                    if (!deleteForm.password) {
+                        ElMessage.warning('请输入当前密码');
+                        return;
+                    }
+                    deleteSaving.value = true;
+                    try {
+                        const res = await axios.post(API.deleteAccount, {password: deleteForm.password});
+                        const result = res.data;
+                        if (result?.code === 200) {
+                            localStorage.removeItem('sams_userinfo');
+                            localStorage.removeItem('sams_avatar');
+                            localStorage.removeItem('sams_cover');
+                            ElMessage.success('账号已注销');
+                            setTimeout(() => location.href = CTX + '/login.html', 800);
+                            return;
+                        }
+                        ElMessage.error(result?.msg || '注销账号失败');
+                    } catch (err) {
+                        ElMessage.error(err.response?.data?.msg || '网络异常，请稍后重试');
+                    } finally {
+                        deleteSaving.value = false;
+                    }
+                }
+
+                async function downloadFile(url, fallbackName, action) {
+                    busyAction.value = action;
+                    try {
+                        const res = await axios.get(url, {responseType: 'blob'});
+                        const blob = res.data instanceof Blob ? res.data : new Blob([res.data]);
+                        const objectUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = objectUrl;
+                        link.download = fallbackName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(objectUrl);
+                        ElMessage.success('导出成功');
+                    } catch (err) {
+                        ElMessage.error(err.response?.data?.msg || '导出失败，请稍后重试');
+                    } finally {
+                        busyAction.value = '';
+                    }
+                }
+
+                function exportScores() {
+                    downloadFile(API.exportScores, '成绩数据.xlsx', 'scores');
+                }
+
+                function exportSummaries() {
+                    downloadFile(API.exportSummaries, '学业总结汇总.xlsx', 'summaries');
+                }
+
+                function clearAcademicData() {
+                    ElMessageBox.confirm(
+                        '将删除全部成绩、学业总结和上传历史，且无法恢复。是否继续？',
+                        '清空学业数据',
+                        {type: 'warning', confirmButtonText: '确认清空', cancelButtonText: '取消'}
+                    ).then(async () => {
+                        busyAction.value = 'clear';
+                        try {
+                            const res = await axios.post(API.clearAcademicData, {});
+                            const result = res.data;
+                            if (result?.code === 200) {
+                                window.dispatchEvent(new CustomEvent('scoresUpdated'));
+                                ElMessage.success('学业数据已清空');
+                            } else {
+                                ElMessage.error(result?.msg || '清空失败');
+                            }
+                        } catch (err) {
+                            ElMessage.error(err.response?.data?.msg || '网络异常，请稍后重试');
+                        } finally {
+                            busyAction.value = '';
+                        }
+                    }).catch(() => {});
+                }
+
+                function checkUpdate() {
+                    updateChecking.value = true;
+                    updateMessage.value = '';
+                    axios.get(API.checkUpdate).then(res => {
+                        const result = res.data;
+                        if (result?.code !== 200 || !result.data) {
+                            ElMessage.error(result?.msg || '检查更新失败');
+                            return;
+                        }
+                        currentVersion.value = result.data.currentVersion || currentVersion.value;
+                        latestVersion.value = result.data.latestVersion || currentVersion.value;
+                        updateAvailable.value = Boolean(result.data.hasUpdate);
+                        if (updateAvailable.value) {
+                            updateMessage.value = `发现新版本 V${latestVersion.value}，请及时更新`;
+                            ElMessage.success(updateMessage.value);
+                        } else {
+                            updateMessage.value = `当前已是最新版本 V${currentVersion.value}`;
+                            ElMessage.success(updateMessage.value);
+                        }
+                    }).catch(err => {
+                        ElMessage.error(err.response?.data?.msg || '检查更新失败，请稍后重试');
+                    }).finally(() => {
+                        updateChecking.value = false;
+                    });
+                }
+
+                function onSystemThemeChange() {
+                    if (form.theme === 'auto') applyTheme();
+                }
+
+                function loadSettings() {
+                    try {
+                        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        Object.assign(form, DEFAULT_FORM, normalizeSettings(saved));
+                    } catch (e) {
+                        Object.assign(form, DEFAULT_FORM);
+                    }
+                    const savedDaysValue = localStorage.getItem(LOGIN_SESSION_KEY);
+                    const savedDays = savedDaysValue === null ? 30 : Number(savedDaysValue);
+                    sessionDays.value = [7, 30].includes(savedDays) ? savedDays : 30;
+                    applyFont();
+                    applyTheme();
+                }
+
+                onMounted(() => {
+                    loadSettings();
+                    loadServerSettings();
+                    if (mql) {
+                        mql.addEventListener ? mql.addEventListener('change', onSystemThemeChange)
+                            : mql.addListener(onSystemThemeChange);
+                    }
+                });
+
+                return {
+                    form, themeColors, sessionDays, busyAction,
+                    currentVersion, latestVersion, updateChecking, updateMessage, updateAvailable, checkUpdate,
+                    passwordDialog, passwordSaving, passwordForm, passwordFormRef, passwordRules,
+                    deleteDialog, deleteSaving, deleteForm,
+                    saveTheme, saveFont, pickColor, saveSessionDays, resetLocalSettings,
+                    openPasswordDialog, submitPassword, replayGuide, openDeleteDialog, confirmDeleteAccount,
+                    exportScores, exportSummaries, clearAcademicData
+                };
+            }
+        });
+        app.use(ElementPlus);
+        for (const [k, c] of Object.entries(ElementPlusIconsVue)) app.component(k, c);
+        app.mount('#settingApp');
+    })();
+</script>

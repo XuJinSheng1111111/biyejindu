@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>404 | 学生智能学业管理系统</title>
+    <link rel="icon" href="static/image/admin2.ico" />
+    <link rel="stylesheet" href="lib/element-plus/index.css" />
+    <link rel="stylesheet" href="static/css/site-footer.css"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;}
+        html,body{min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
+        body{
+            background:linear-gradient(135deg, var(--sidebar-bg) 0%, var(--sidebar-hover-bg) 58%, var(--primary-color) 100%);display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+            min-height:100vh;overflow:auto;position:relative;
+        }
+        .wrap{text-align:center;padding:40px;z-index:2;}
+        .code{
+            font-size:180px;font-weight:900;line-height:1;
+            background:linear-gradient(135deg,var(--primary-color),var(--primary-color-light));
+            -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+            letter-spacing:-8px;animation:shake 3s ease-in-out infinite;
+        }
+        @keyframes shake{
+            0%,100%{transform:translate(0,0) rotate(0);}
+            25%{transform:translate(-3px,2px) rotate(-1deg);}
+            50%{transform:translate(3px,-2px) rotate(1deg);}
+            75%{transform:translate(-2px,-1px) rotate(-0.5deg);}
+        }
+        h2{font-size:26px;color: var(--white);margin-bottom:10px;}
+        p{font-size:15px;color:rgba(255,255,255,.72);margin-bottom:6px;}
+        .tips{margin:24px 0 36px;}
+        .back-btn{padding:12px 36px;font-size:16px;}
+        .floating{position:absolute;font-size:40px;opacity:0.25;animation:float 6s ease-in-out infinite;}
+        .f1{top:15%;left:10%;animation-delay:0s;}
+        .f2{top:20%;right:12%;animation-delay:1s;}
+        .f3{bottom:20%;left:15%;animation-delay:2s;}
+        .f4{bottom:15%;right:18%;animation-delay:3s;}
+        @keyframes float{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-20px) rotate(10deg);}}
+    </style>
+</head>
+<body>
+
+
+
+
+<main class="page-main">
+    <div class="wrap">
+        <div class="code">404</div>
+        <h2>同学，你走错教室了~</h2>
+        <div class="tips">
+            <p>这个页面可能被老师收走了</p>
+            <p>也可能是你输入错了地址，或者网络开小差了</p>
+        </div>
+        <el-button type="primary" class="back-btn" size="large" @click="goHome">
+            <el-icon><House/></el-icon>&nbsp;返回首页
+        </el-button>
+    </div>
+</main>
+<script src="lib/vue3/vue.global.prod.js"></script>
+<script src="lib/element-plus/index.full.js"></script>
+<script src="lib/icons-vue.js"></script>
+<script>
+    (() => {
+        const { createApp } = Vue;
+        const { House } = ElementPlusIconsVue;
+        createApp({
+            methods: {
+                goHome(){ location.href = '/student_system/home.html'; }
+            }
+        }).use(ElementPlus).component('House', House).mount('.wrap');
+    })();
+</script>
+</body>
+</html>

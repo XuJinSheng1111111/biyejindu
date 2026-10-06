@@ -1,0 +1,1083 @@
+<style>
+    .analysis-page {
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px;
+        box-sizing: border-box;
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .analysis-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 20px;
+        padding: 22px 26px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+    }
+
+    .analysis-header h2 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .analysis-header p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .term-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .term-selector .selector-label {
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card,
+    .chart-card,
+    .career-chart-card,
+    .all-summary-card,
+    .ai-card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .metric-label {
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .metric-value {
+        margin-top: 8px;
+        color: var(--primary-color);
+        font-size: 28px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .metric-tip {
+        margin-top: 6px;
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .card-subtitle {
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 400;
+    }
+
+    .chart-container {
+        width: 100%;
+        height: 360px;
+    }
+
+
+    .summary-state {
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .summary-empty {
+        color: var(--text-secondary);
+        background: var(--hover-bg);
+    }
+
+    .summary-error {
+        color: var(--danger-color);
+        background: var(--danger-color-light);
+    }
+
+    .summary-sections {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .summary-block {
+        min-width: 0;
+        padding: 18px;
+        background: var(--hover-bg);
+        border-radius: 10px;
+        border-top: 3px solid var(--primary-color);
+    }
+
+    .summary-block:nth-child(2) {
+        border-top-color: var(--warning-color);
+    }
+
+    .summary-block:nth-child(3) {
+        border-top-color: var(--success-color);
+    }
+
+    .summary-block h3 {
+        margin: 0 0 10px;
+        color: var(--text-primary);
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .summary-block p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .competition-recommend {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed var(--border-color);
+    }
+
+    .competition-recommend-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .competition-recommend-head span:last-child {
+        font-weight: 400;
+        color: var(--text-secondary);
+    }
+
+    .competition-recommend-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    .competition-recommend-item {
+        display: block;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color-light);
+        border-radius: 8px;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+
+    .competition-recommend-item:hover {
+        border-color: var(--primary-color-light);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(64, 158, 255, .10);
+    }
+
+    .competition-recommend-item strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 13px;
+    }
+
+    .competition-recommend-item small {
+        display: block;
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.55;
+    }
+
+    .career-section {
+        margin-top: 28px;
+    }
+
+    .career-section-title {
+        margin: 0 0 16px;
+        color: var(--text-primary);
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .career-chart-card {
+        margin-bottom: 20px;
+    }
+
+    .career-empty {
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+        background: var(--hover-bg);
+        border-radius: 10px;
+    }
+
+    .all-summary-content {
+        min-height: 110px;
+        padding: 18px;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.85;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        background: var(--hover-bg);
+        border-radius: 10px;
+        border-top: 3px solid var(--primary-color);
+    }
+
+    .all-summary-empty {
+        color: var(--text-secondary);
+    }
+
+    .all-summary-tip {
+        margin: 12px 0 0;
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .summary-note {
+        margin: 18px 0 0;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-color-light);
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+        .chart-grid,
+        .summary-sections {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .analysis-page { padding: 16px; }
+        .analysis-header { align-items: stretch; flex-direction: column; }
+        .term-selector { justify-content: space-between; }
+        .metric-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="analysis-page" id="academicAnalysisApp">
+    <header class="analysis-header">
+        <div>
+            <h2>学业智能分析</h2>
+            <p>查看当前学期成绩表现，并阅读后端预生成的学业诊断与学习建议。</p>
+        </div>
+        <div class="term-selector">
+            <span class="selector-label">学期</span>
+            <el-select v-model="selectedTerm" :loading="termLoading" placeholder="请选择学期"
+                       style="width:220px;" :disabled="termOptions.length === 0">
+                <el-option v-for="item in termOptions" :key="item.value"
+                           :label="item.label" :value="item.value"></el-option>
+            </el-select>
+        </div>
+    </header>
+
+    <section class="metric-grid" aria-label="学期成绩概览">
+        <el-card class="metric-card" shadow="hover">
+            <div class="metric-label">学期平均分</div>
+            <div class="metric-value">{{ averageScoreText }}</div>
+            <div class="metric-tip">按学分加权计算</div>
+        </el-card>
+        <el-card class="metric-card" shadow="hover">
+            <div class="metric-label">课程数量</div>
+            <div class="metric-value">{{ scoreList.length }}</div>
+            <div class="metric-tip">当前学期已录入课程</div>
+        </el-card>
+        <el-card class="metric-card" shadow="hover">
+            <div class="metric-label">课程及格率</div>
+            <div class="metric-value">{{ passRateText }}</div>
+            <div class="metric-tip">按总评成绩统计</div>
+        </el-card>
+    </section>
+
+    <section class="chart-grid" v-loading="scoreLoading" element-loading-text="正在加载成绩数据...">
+        <el-card class="chart-card" shadow="hover">
+            <template #header>
+                <div class="card-heading"><span>各科成绩</span><span class="card-subtitle">期末成绩 / 总评成绩</span></div>
+            </template>
+            <div id="academicBarChart" class="chart-container" role="img" aria-label="各科成绩柱状图"></div>
+        </el-card>
+        <el-card class="chart-card" shadow="hover">
+            <template #header>
+                <div class="card-heading"><span>成绩等级分布</span><span class="card-subtitle">按总评分统计</span></div>
+            </template>
+            <div id="academicPieChart" class="chart-container" role="img" aria-label="成绩等级分布饼图"></div>
+        </el-card>
+    </section>
+
+
+    <el-card class="ai-card" shadow="hover" v-loading="summaryLoading" element-loading-text="正在读取学业建议...">
+        <template #header>
+            <div class="card-heading">
+                <span>智能学业分析与学习建议</span>
+                <el-tag size="small" type="info" effect="plain">后端预生成</el-tag>
+            </div>
+        </template>
+
+        <div v-if="summaryError" class="summary-state summary-error">获取学业建议失败</div>
+        <div v-else-if="!hasSummary" class="summary-state summary-empty">
+            尚未生成学业分析，请先完成本学期成绩单导入
+        </div>
+        <div v-else class="summary-sections">
+            <section class="summary-block">
+                <h3>① 整体评价</h3>
+                <p>{{ summarySections.overall || '暂无整体评价内容' }}</p>
+            </section>
+            <section class="summary-block">
+                <h3>② 薄弱学科分析</h3>
+                <p>{{ summarySections.weaknesses || '暂无薄弱学科分析内容' }}</p>
+            </section>
+            <section class="summary-block">
+                <h3>③ 个性化学习建议</h3>
+                <p>{{ summarySections.suggestions || '暂无个性化学习建议' }}</p>
+                <div class="competition-recommend" v-if="recommendedCompetitions.length">
+                    <div class="competition-recommend-head">
+                        <span>推荐竞赛</span>
+                        <span>根据当前学科表现匹配</span>
+                    </div>
+                    <div class="competition-recommend-list">
+                        <a v-for="item in recommendedCompetitions" :key="item.name"
+                           class="competition-recommend-item" :href="item.url"
+                           target="_blank" rel="noopener noreferrer">
+                            <strong>{{ item.name }}</strong>
+                            <small>{{ item.desc }}</small>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <p class="summary-note">学业分析将在成绩单批量导入完成后自动生成；再次上传新成绩，分析内容会自动更新。</p>
+    </el-card>
+
+    <section class="career-section">
+        <h2 class="career-section-title">学业生涯总览</h2>
+
+        <el-card class="career-chart-card" shadow="hover" v-loading="careerLoading" element-loading-text="正在加载学业生涯数据...">
+            <template #header>
+                <div class="card-heading">
+                    <span>学业成绩变化历程图</span>
+                    <span class="card-subtitle">全部学期平均分 / GPA</span>
+                </div>
+            </template>
+
+            <div v-if="!careerLoading && !hasMultiTerm" class="career-empty">
+                暂无多学期成绩，无法生成生涯趋势图
+            </div>
+            <div v-else id="academicTrendChart" class="chart-container" role="img" aria-label="学业成绩变化趋势折线图"></div>
+        </el-card>
+
+        <el-card class="all-summary-card" shadow="hover" v-loading="allSummaryLoading" element-loading-text="正在生成全学期综合学业总结...">
+            <template #header>
+                <div class="card-heading">
+                    <span>全部学期综合学业诊断</span>
+                    <el-button type="primary" :loading="allSummaryLoading" :disabled="!hasMultiTerm"
+                               @click="generateAllSummary">生成整体学业总结</el-button>
+                </div>
+            </template>
+
+            <div v-if="allSummaryError" class="summary-state summary-error">获取综合学业总结失败</div>
+            <div v-else class="all-summary-content" :class="{'all-summary-empty': !allSummaryText}">
+                {{ allSummaryText || (hasMultiTerm ? '尚未生成综合学业总结，请点击上方按钮生成。' : '需要至少2个学期成绩才能生成综合学业总结。') }}
+            </div>
+        </el-card>
+    </section>
+</div>
+
+<script>
+    (() => {
+        const {createApp, ref, computed, watch, nextTick, onMounted, onBeforeUnmount} = Vue;
+        const {ElMessage} = ElementPlus;
+        const CTX = '/student_system';
+        const http = axios.create({baseURL: CTX + '/api', timeout: 15000});
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+
+
+
+
+
+
+
+
+
+
+
+
+        createApp({
+            setup() {
+                const termOptions = ref([]);
+                const selectedTerm = ref('');
+                const termLoading = ref(false);
+                const scoreList = ref([]);
+                const scoreLoading = ref(false);
+                const summaryText = ref('');
+                const summaryLoading = ref(false);
+                const summaryError = ref(false);
+
+                const allScoreList = ref([]);
+                const careerLoading = ref(false);
+                const allSummaryText = ref('');
+                const allSummaryLoading = ref(false);
+                const allSummaryError = ref(false);
+
+                let barChart = null;
+                let pieChart = null;
+                let trendChart = null;
+                let resizeObserver = null;
+                let scoreRequestId = 0;
+                let summaryRequestId = 0;
+
+                function redirectToLogin() {
+                    ElMessage.error('登录状态已失效，请重新登录');
+                    setTimeout(() => { window.top.location.href = CTX + '/login.html'; }, 800);
+                }
+
+                function extractList(payload) {
+                    if (Array.isArray(payload)) return payload;
+                    if (Array.isArray(payload?.records)) return payload.records;
+                    if (Array.isArray(payload?.list)) return payload.list;
+                    if (Array.isArray(payload?.scores)) return payload.scores;
+                    return [];
+                }
+
+                function buildTermValue(score) {
+                    if (score?.termValue) return String(score.termValue);
+                    if (score?.schoolYear && score?.term) return `${score.schoolYear}-${score.term}`;
+                    return score?.term ? String(score.term) : '';
+                }
+
+                function buildTermLabel(value) {
+                    if (!value) return '未知学期';
+                    const matched = String(value).match(/^(.+)-([春秋])$/);
+                    return matched ? `${matched[1]} ${matched[2]}季` : String(value);
+                }
+
+                function extractTermList(payload) {
+                    if (Array.isArray(payload)) return payload;
+                    if (Array.isArray(payload?.terms)) return payload.terms;
+                    if (Array.isArray(payload?.list)) return payload.list;
+                    return [];
+                }
+
+                function normalizeTermItem(item) {
+                    if (typeof item === 'string') {
+                        return {value: item, label: buildTermLabel(item)};
+                    }
+                    const value = buildTermValue(item);
+                    if (!value) return null;
+                    return {value, label: item?.label || buildTermLabel(value)};
+                }
+
+                async function loadTermOptions() {
+                    termLoading.value = true;
+                    try {
+                        const response = await http.get('/score/getAllTermList');
+                        const result = response.data;
+                        if (result?.code === 401) { redirectToLogin(); return; }
+                        if (result?.code !== 200) throw new Error(result?.msg || '学期列表获取失败');
+
+                        const termMap = new Map();
+                        extractTermList(result.data).forEach(item => {
+                            const option = normalizeTermItem(item);
+                            if (option && !termMap.has(option.value)) {
+                                termMap.set(option.value, option);
+                            }
+                        });
+
+                        termOptions.value = [...termMap.values()].sort((a, b) => b.value.localeCompare(a.value));
+
+                        if (termOptions.value.length) {
+                            selectedTerm.value = termOptions.value[0].value;
+                        } else {
+                            selectedTerm.value = '';
+                            scoreList.value = [];
+                            summaryText.value = '';
+                            renderCharts();
+                        }
+                    } catch (error) {
+                        console.error('获取学期列表失败：', error);
+                        ElMessage.error('获取学期列表失败');
+                        termOptions.value = [];
+                        selectedTerm.value = '';
+                    } finally {
+                        termLoading.value = false;
+                    }
+                }
+
+                async function loadScoreList(term) {
+                    if (!term) return;
+                    const requestId = ++scoreRequestId;
+                    scoreLoading.value = true;
+                    try {
+                        const response = await http.get('/score/getScoreByTerm', {params: {term}});
+                        const result = response.data;
+                        if (requestId !== scoreRequestId) return;
+                        if (result?.code === 401) { redirectToLogin(); return; }
+                        if (result?.code !== 200) throw new Error(result?.msg || '成绩数据获取失败');
+                        scoreList.value = extractList(result.data);
+                    } catch (error) {
+                        if (requestId !== scoreRequestId) return;
+                        console.error('获取成绩数据失败：', error);
+                        scoreList.value = [];
+                        ElMessage.error('获取成绩数据失败');
+                    } finally {
+                        if (requestId === scoreRequestId) {
+                            scoreLoading.value = false;
+                            await nextTick();
+                            renderCharts();
+                        }
+                    }
+                }
+
+                async function loadSummary(term) {
+                    if (!term) return;
+                    const requestId = ++summaryRequestId;
+                    summaryLoading.value = true;
+                    summaryError.value = false;
+                    try {
+                        const response = await http.get('/scoreSummary/getSummary', {params: {term}});
+                        const result = response.data;
+                        if (requestId !== summaryRequestId) return;
+                        if (result?.code === 401) { redirectToLogin(); return; }
+                        if (result?.code !== 200) throw new Error(result?.msg || '获取学业建议失败');
+                        summaryText.value = typeof result.data === 'string'
+                            ? result.data.trim()
+                            : (result.data?.summaryText || '').trim();
+                    } catch (error) {
+                        if (requestId !== summaryRequestId) return;
+                        console.error('获取学业建议失败：', error);
+                        summaryText.value = '';
+                        summaryError.value = true;
+                        ElMessage.error('获取学业建议失败');
+                    } finally {
+                        if (requestId === summaryRequestId) summaryLoading.value = false;
+                    }
+                }
+
+                async function refreshByTerm(term) {
+                    if (!term) return;
+                    await Promise.allSettled([loadScoreList(term), loadSummary(term)]);
+                }
+
+                function weightedMetric(items, field) {
+                    if (!items.length) return 0;
+
+                    const totalCredit = items.reduce(
+                        (sum, item) => sum + (Number(item.credit) || 0),
+                        0
+                    );
+
+                    if (totalCredit > 0) {
+                        const weighted = items.reduce((sum, item) => {
+                            const value = Number(item[field]);
+                            return sum + (Number.isFinite(value) ? value : 0) * (Number(item.credit) || 0);
+                        }, 0);
+                        return weighted / totalCredit;
+                    }
+
+                    const values = items
+                        .map(item => Number(item[field]))
+                        .filter(Number.isFinite);
+
+                    if (!values.length) return 0;
+                    return values.reduce((sum, value) => sum + value, 0) / values.length;
+                }
+
+                function buildCareerTermValue(score) {
+                    if (score?.termValue) return String(score.termValue);
+                    if (score?.schoolYear && score?.term) return `${score.schoolYear}-${score.term}`;
+                    return score?.term ? String(score.term) : '';
+                }
+
+                function buildCareerTermLabel(value) {
+                    const matched = String(value || '').match(/^(.+)-([春秋])$/);
+                    if (!matched) return String(value || '未知学期');
+                    return `${matched[1]}${matched[2] === '秋' ? '上' : '下'}`;
+                }
+
+                function careerSortKey(value) {
+                    const matched = String(value || '').match(/^(\d{4}).*?([春秋上下])$/);
+                    if (!matched) return 0;
+                    const firstTerm = matched[2] === '秋' || matched[2] === '上';
+                    return Number(matched[1]) * 10 + (firstTerm ? 0 : 1);
+                }
+
+                const careerTrendData = computed(() => {
+                    const semesterMap = new Map();
+
+                    allScoreList.value.forEach(score => {
+                        const value = buildCareerTermValue(score);
+                        if (!value) return;
+                        if (!semesterMap.has(value)) {
+                            semesterMap.set(value, {value, items: []});
+                        }
+                        semesterMap.get(value).items.push(score);
+                    });
+
+                    return [...semesterMap.values()]
+                        .map(group => ({
+                            value: group.value,
+                            label: buildCareerTermLabel(group.value),
+                            averageScore: Number(weightedMetric(group.items, 'totalScore').toFixed(2)),
+                            gpa: Number(weightedMetric(group.items, 'gpa').toFixed(2))
+                        }))
+                        .sort((a, b) => careerSortKey(a.value) - careerSortKey(b.value));
+                });
+
+                const hasMultiTerm = computed(() => careerTrendData.value.length >= 2);
+
+                async function loadCareerData() {
+                    careerLoading.value = true;
+                    try {
+                        const response = await http.get('/score/getAllScore');
+                        const result = response.data;
+                        if (result?.code === 401) { redirectToLogin(); return; }
+                        if (result?.code !== 200) throw new Error(result?.msg || '学业生涯数据获取失败');
+                        allScoreList.value = extractList(result.data);
+                        await nextTick();
+                        renderCareerChart();
+                    } catch (error) {
+                        console.error('获取学业生涯数据失败：', error);
+                        allScoreList.value = [];
+                        renderCareerChart();
+                        ElMessage.error('获取学业生涯数据失败');
+                    } finally {
+                        careerLoading.value = false;
+                    }
+                }
+
+                async function generateAllSummary() {
+                    if (!hasMultiTerm.value) {
+                        ElMessage.warning('需要至少2个学期成绩才能生成综合学业总结');
+                        return;
+                    }
+
+                    allSummaryLoading.value = true;
+                    allSummaryError.value = false;
+                    try {
+                        const response = await http.post('/scoreSummary/getAllSummary', {});
+                        const result = response.data;
+                        if (result?.code === 401) { redirectToLogin(); return; }
+                        if (result?.code !== 200) throw new Error(result?.msg || '获取综合学业总结失败');
+                        allSummaryText.value = typeof result.data === 'string'
+                            ? result.data.trim()
+                            : (result.data?.summaryText || '').trim();
+
+                        await loadCareerData();
+                    } catch (error) {
+                        console.error('获取综合学业总结失败：', error);
+                        allSummaryText.value = '';
+                        allSummaryError.value = true;
+                        ElMessage.error('获取综合学业总结失败');
+                    } finally {
+                        allSummaryLoading.value = false;
+                    }
+                }
+
+                const averageScoreText = computed(() => {
+                    if (!scoreList.value.length) return '--';
+                    const totalCredit = scoreList.value.reduce((sum, item) => sum + (Number(item.credit) || 0), 0);
+                    if (totalCredit > 0) {
+                        const weighted = scoreList.value.reduce((sum, item) => {
+                            const score = Number(item.totalScore);
+                            return sum + (Number.isFinite(score) ? score : 0) * (Number(item.credit) || 0);
+                        }, 0);
+                        return (weighted / totalCredit).toFixed(2);
+                    }
+                    const values = scoreList.value.map(item => Number(item.totalScore)).filter(Number.isFinite);
+                    if (!values.length) return '--';
+                    return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2);
+                });
+
+                const passRateText = computed(() => {
+                    if (!scoreList.value.length) return '--';
+                    const passed = scoreList.value.filter(item => Number(item.totalScore) >= 60).length;
+                    return ((passed / scoreList.value.length) * 100).toFixed(0) + '%';
+                });
+
+                const hasSummary = computed(() => Boolean(summaryText.value.trim()));
+
+                const recommendedCompetitions = computed(() => {
+                    const scores = scoreList.value || [];
+                    if (!scores.length) return [];
+
+                    const courseNames = scores.map(item => String(item.courseName || '')).join(' ');
+                    const average = Number(averageScoreText.value) || 0;
+                    const recommendations = [];
+
+                    if (/程序|算法|数据结构|计算机|软件|Java|Python/i.test(courseNames) || average >= 80) {
+                        recommendations.push({
+                            name: '蓝桥杯全国软件和信息技术专业人才大赛',
+                            desc: '适合程序设计、算法与软件开发能力突出的同学。',
+                            url: 'https://dasai.lanqiao.cn/'
+                        });
+                    }
+                    if (/数学|高等数学|线性代数|概率/i.test(courseNames)) {
+                        recommendations.push({
+                            name: '全国大学生数学建模竞赛',
+                            desc: '适合数学基础较好、逻辑分析与建模能力较强的同学。',
+                            url: 'https://www.mcm.edu.cn/'
+                        });
+                    }
+                    if (/英语|大学英语/i.test(courseNames)) {
+                        recommendations.push({
+                            name: '全国大学生英语竞赛',
+                            desc: '适合英语成绩较好、希望提升语言应用能力的同学。',
+                            url: 'https://www.chinaneccs.cn/'
+                        });
+                    }
+                    if (!recommendations.length) {
+                        recommendations.push({
+                            name: '中国大学生计算机设计大赛',
+                            desc: '适合希望提升计算机应用、创新设计和团队协作能力的同学。',
+                            url: 'https://jsjds.blcu.edu.cn/'
+                        });
+                    }
+                    if (average >= 75) {
+                        recommendations.push({
+                            name: '中国国际大学生创新大赛',
+                            desc: '适合综合成绩稳定、希望参与创新创业实践的同学。',
+                            url: 'https://cy.ncss.cn/'
+                        });
+                    }
+
+                    const unique = new Map(recommendations.map(item => [item.name, item]));
+                    return Array.from(unique.values()).slice(0, 3);
+                });
+
+                function stripMarkdown(value) {
+                    return String(value || '')
+                        .replace(/\r\n/g, '\n')
+                        .replace(/```[\s\S]*?```/g, '')
+                        .replace(/^#{1,6}\s*/gm, '')
+                        .replace(/[【】]/g, '')
+                        .replace(/\*\*/g, '')
+                        .replace(/\*/g, '')
+                        .replace(/_/g, '')
+                        .replace(/^[-*]\s+/gm, '')
+                        .replace(/\n{3,}/g, '\n\n')
+                        .trim();
+                }
+
+                function cleanSection(value) {
+                    return stripMarkdown(value)
+                        .replace(/^\s*[一二三四五六七八九十]+[、.．:：]\s*/, '')
+                        .replace(/^\s*[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '')
+                        .trim();
+                }
+
+                const summarySections = computed(() => {
+                    const text = stripMarkdown(summaryText.value);
+                    if (!text) return {overall: '', weaknesses: '', suggestions: ''};
+
+                    const markerDefs = [
+                        {key: 'overall', names: ['整体评价', '总体评价', '整体概况', '总体概况', '学业概况']},
+                        {key: 'weaknesses', names: ['薄弱学科分析', '薄弱科目分析', '薄弱学科', '薄弱科目']},
+                        {key: 'suggestions', names: ['个性化学习建议', '学习改进建议', '学习建议', '改进建议']}
+                    ];
+
+                    const markers = [];
+                    for (const def of markerDefs) {
+                        let found = null;
+                        for (const name of def.names) {
+                            const index = text.indexOf(name);
+                            if (index >= 0 && (found === null || index < found.index)) {
+                                found = {key: def.key, index, name};
+                            }
+                        }
+                        if (found) markers.push(found);
+                    }
+                    markers.sort((a, b) => a.index - b.index);
+
+                    if (!markers.length) {
+                        return {overall: text, weaknesses: '', suggestions: ''};
+                    }
+
+                    const sections = {overall: '', weaknesses: '', suggestions: ''};
+                    markers.forEach((marker, index) => {
+                        const start = marker.index + marker.name.length;
+                        const end = markers[index + 1]?.index ?? text.length;
+                        sections[marker.key] = cleanSection(text.slice(start, end));
+                    });
+                    return sections;
+                });
+
+                function renderCareerChart() {
+                    const data = careerTrendData.value;
+                    if (data.length < 2) {
+                        trendChart?.clear();
+                        return;
+                    }
+
+                    const chartDom = document.getElementById('academicTrendChart');
+                    if (!chartDom) return;
+
+                    if (!trendChart) {
+                        trendChart = echarts.init(chartDom);
+                        window.__pageCharts.academicTrend = trendChart;
+                        resizeObserver?.observe(chartDom);
+                    }
+
+                    trendChart.setOption({
+                        animation: false,
+                        color: [themeCssVar('--primary-color'), themeCssVar('--warning-color')],
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: params => {
+                                const rows = params.map(item =>
+                                    `${item.marker}${item.seriesName}：${Number(item.value).toFixed(2)}`
+                                );
+                                return `${escapeHtml(params[0]?.axisValue || '')}<br/>${rows.join('<br/>')}`;
+                            }
+                        },
+                        legend: {
+                            top: 0,
+                            data: ['学期平均分', 'GPA']
+                        },
+                        grid: {
+                            left: 56,
+                            right: 56,
+                            top: 48,
+                            bottom: 44
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: data.map(item => item.label),
+                            axisLabel: {
+                                color: themeCssVar('--text-secondary')
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: themeCssVar('--border-color')
+                                }
+                            }
+                        },
+                        yAxis: [
+                            {
+                                type: 'value',
+                                name: '平均分',
+                                min: 0,
+                                max: 100,
+                                axisLabel: {color: themeCssVar('--text-secondary')},
+                                splitLine: {lineStyle: {color: themeCssVar('--border-color-light')}}
+                            },
+                            {
+                                type: 'value',
+                                name: 'GPA',
+                                min: 0,
+                                max: 5,
+                                axisLabel: {color: themeCssVar('--text-secondary')},
+                                splitLine: {show: false}
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '学期平均分',
+                                type: 'line',
+                                smooth: true,
+                                symbol: 'circle',
+                                symbolSize: 8,
+                                data: data.map(item => item.averageScore),
+                                lineStyle: {width: 3},
+                                itemStyle: {color: themeCssVar('--primary-color')},
+                                label: {
+                                    show: true,
+                                    position: 'top',
+                                    color: themeCssVar('--primary-color'),
+                                    formatter: params => Number(params.value).toFixed(1)
+                                }
+                            },
+                            {
+                                name: 'GPA',
+                                type: 'line',
+                                smooth: true,
+                                symbol: 'circle',
+                                symbolSize: 8,
+                                yAxisIndex: 1,
+                                data: data.map(item => item.gpa),
+                                lineStyle: {width: 3},
+                                itemStyle: {color: themeCssVar('--warning-color')},
+                                label: {
+                                    show: true,
+                                    position: 'bottom',
+                                    color: themeCssVar('--warning-color'),
+                                    formatter: params => Number(params.value).toFixed(2)
+                                }
+                            }
+                        ]
+                    }, true);
+                }
+
+                function initCharts() {
+                    const barDom = document.getElementById('academicBarChart');
+                    const pieDom = document.getElementById('academicPieChart');
+                    if (barDom && !barChart) {
+                        barChart = echarts.init(barDom);
+                        window.__pageCharts.academicBar = barChart;
+                    }
+                    if (pieDom && !pieChart) {
+                        pieChart = echarts.init(pieDom);
+                        window.__pageCharts.academicPie = pieChart;
+                    }
+                }
+
+                function renderCharts() {
+                    if (!barChart || !pieChart) return;
+                    const scores = scoreList.value;
+                    if (!scores.length) {
+                        barChart.clear();
+                        pieChart.clear();
+                        return;
+                    }
+
+                    const courseNames = scores.map(item => item.courseName || '未命名课程');
+                    const finalScores = scores.map(item => Number(item.finalScore) || 0);
+                    const totalScores = scores.map(item => Number(item.totalScore) || 0);
+
+                    barChart.setOption({
+                        animation: false,
+                        color: [themeCssVar('--primary-color'), themeCssVar('--success-color')],
+                        tooltip: {trigger: 'axis', axisPointer: {type: 'shadow'}},
+                        legend: {top: 0, data: ['期末成绩', '总评成绩']},
+                        grid: {left: 48, right: 24, top: 46, bottom: 72},
+                        xAxis: {
+                            type: 'category', data: courseNames,
+                            axisLabel: {interval: 0, rotate: 30, color: themeCssVar('--text-secondary'), hideOverlap: true},
+                            axisLine: {lineStyle: {color: themeCssVar('--border-color')}}
+                        },
+                        yAxis: {
+                            type: 'value', min: 0, max: 100, name: '分数',
+                            axisLabel: {color: themeCssVar('--text-secondary')},
+                            splitLine: {lineStyle: {color: themeCssVar('--border-color-light')}}
+                        },
+                        series: [
+                            {name: '期末成绩', type: 'bar', barMaxWidth: 28, data: finalScores, itemStyle: {borderRadius: [4, 4, 0, 0]}},
+                            {
+                                name: '总评成绩', type: 'bar', barMaxWidth: 28, data: totalScores,
+                                itemStyle: {borderRadius: [4, 4, 0, 0]},
+                                markLine: {silent: true, symbol: 'none', lineStyle: {color: themeCssVar('--warning-color'), type: 'dashed'}, data: [{type: 'average', name: '平均分'}]}
+                            }
+                        ]
+                    }, true);
+
+                    const count = {excellent: 0, good: 0, medium: 0, pass: 0, fail: 0};
+                    scores.forEach(item => {
+                        const score = Number(item.totalScore);
+                        if (score >= 90) count.excellent += 1;
+                        else if (score >= 80) count.good += 1;
+                        else if (score >= 70) count.medium += 1;
+                        else if (score >= 60) count.pass += 1;
+                        else count.fail += 1;
+                    });
+
+                    pieChart.setOption({
+                        animation: false,
+                        color: [themeCssVar('--success-color'), themeCssVar('--primary-color'), themeCssVar('--warning-color'), themeCssVar('--warning-color'), themeCssVar('--danger-color')],
+                        tooltip: {trigger: 'item', formatter: '{b}<br/>{c}门（{d}%）'},
+                        legend: {bottom: 0, left: 'center'},
+                        series: [{
+                            name: '成绩等级', type: 'pie', radius: ['42%', '68%'], center: ['50%', '46%'],
+                            avoidLabelOverlap: true,
+                            itemStyle: {borderColor: themeCssVar('--card-bg'), borderWidth: 2},
+                            label: {color: themeCssVar('--text-secondary'), formatter: '{b}\n{c}门'},
+                            data: [
+                                {value: count.excellent, name: '优秀（90+）'},
+                                {value: count.good, name: '良好（80-89）'},
+                                {value: count.medium, name: '中等（70-79）'},
+                                {value: count.pass, name: '及格（60-69）'},
+                                {value: count.fail, name: '不及格（<60）'}
+                            ]
+                        }]
+                    }, true);
+                }
+
+                watch(selectedTerm, term => refreshByTerm(term));
+
+                onMounted(async () => {
+                    await nextTick();
+                    initCharts();
+
+                    if (window.ResizeObserver) {
+                        resizeObserver = new ResizeObserver(() => {
+                            barChart?.resize();
+                            pieChart?.resize();
+                            trendChart?.resize();
+                        });
+                        resizeObserver.observe(document.getElementById('academicBarChart'));
+                        resizeObserver.observe(document.getElementById('academicPieChart'));
+                        window.__pageCharts.academicResize = {dispose: () => resizeObserver?.disconnect()};
+                    }
+
+                    await Promise.allSettled([loadTermOptions(), loadCareerData()]);
+                });
+
+                onBeforeUnmount(() => {
+                    resizeObserver?.disconnect();
+                    barChart?.dispose();
+                    pieChart?.dispose();
+                    trendChart?.dispose();
+                    delete window.__pageCharts.academicBar;
+                    delete window.__pageCharts.academicPie;
+                    delete window.__pageCharts.academicTrend;
+                    delete window.__pageCharts.academicResize;
+                });
+
+                return {
+                    termOptions, selectedTerm, termLoading,
+                    scoreList, scoreLoading, summaryText, summaryLoading, summaryError,
+                    allScoreList, careerLoading, hasMultiTerm,
+                    allSummaryText, allSummaryLoading, allSummaryError,
+                    averageScoreText, passRateText, hasSummary, summarySections,
+                    recommendedCompetitions,
+                    generateAllSummary
+                };
+            }
+        }).use(ElementPlus).mount('#academicAnalysisApp');
+    })();
+</script>

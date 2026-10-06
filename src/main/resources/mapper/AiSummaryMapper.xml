@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.AiSummaryMapper">
+
+    <insert id="upsert" useGeneratedKeys="true" keyProperty="id">
+        insert into ai_summary
+        (student_info_id, school_year, term, summary_text, summary_type, create_time, update_time)
+        values
+        (#{studentInfoId}, #{schoolYear}, #{term}, #{summaryText}, #{summaryType}, now(), now())
+        on duplicate key update
+            summary_text = values(summary_text),
+            update_time = now()
+    </insert>
+
+    <select id="selectOne" resultType="pojo.AiSummary">
+        select id,
+               student_info_id,
+               school_year,
+               term,
+               summary_text,
+               summary_type,
+               create_time,
+               update_time
+        from ai_summary
+        where student_info_id = #{studentInfoId}
+          and school_year = #{schoolYear}
+          and term = #{term}
+          and summary_type = #{summaryType}
+        limit 1
+    </select>
+    <select id="selectAllByStudentInfoId" resultType="pojo.AiSummary">
+        select id,
+               student_info_id,
+               school_year,
+               term,
+               summary_text,
+               summary_type,
+               create_time,
+               update_time
+        from ai_summary
+        where student_info_id = #{studentInfoId}
+        order by update_time desc, id desc
+    </select>
+
+    <delete id="deleteByStudentInfoId">
+        delete from ai_summary
+        where student_info_id = #{studentInfoId}
+    </delete>
+</mapper>

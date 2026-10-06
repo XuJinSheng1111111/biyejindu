@@ -1,0 +1,700 @@
+<style>
+    .competition-page {
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px;
+        box-sizing: border-box;
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .content-card {
+        width: 100%;
+    }
+
+    .card-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 20px;
+    }
+
+    .card-heading h2 {
+        margin: 0 0 6px;
+        color: var(--text-primary);
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .card-heading p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .card-heading-icon {
+        flex-shrink: 0;
+        color: var(--primary-color);
+        font-size: 42px;
+        line-height: 1;
+    }
+
+    .content-card .el-tabs__header {
+        margin-bottom: 18px;
+    }
+
+    .content-card .el-tabs__item {
+        height: 42px;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 42px;
+    }
+
+    .content-card .el-tabs__item.is-active,
+    .content-card .el-tabs__item:hover {
+        color: var(--primary-color);
+    }
+
+    .content-card .el-tabs__active-bar {
+        background: var(--primary-color);
+    }
+
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .filter-keyword {
+        width: 230px;
+        flex-shrink: 0;
+    }
+
+    .filter-select {
+        width: 130px;
+        flex-shrink: 0;
+    }
+
+    .filter-select-small {
+        width: 110px;
+    }
+
+    .filter-bar .el-input__wrapper,
+    .filter-bar .el-select__wrapper {
+        background: var(--input-bg);
+        box-shadow: 0 0 0 1px var(--border-color) inset;
+    }
+
+    .filter-bar .el-input__inner,
+    .filter-bar .el-select__selected-item {
+        color: var(--text-primary);
+    }
+
+    .filter-bar .el-button {
+        --el-button-bg-color: var(--card-bg);
+        --el-button-border-color: var(--border-color);
+        --el-button-text-color: var(--text-primary);
+        --el-button-hover-bg-color: var(--primary-color-light);
+        --el-button-hover-border-color: var(--primary-color);
+        --el-button-hover-text-color: var(--primary-color);
+    }
+
+    .recommend-tip {
+        padding: 12px 16px;
+        border-left: 3px solid var(--primary-color);
+        border-radius: 8px;
+        background: var(--primary-color-light);
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .competition-table {
+        width: 100%;
+        margin-top: 8px;
+        --el-table-bg-color: var(--card-bg);
+        --el-table-tr-bg-color: var(--card-bg);
+        --el-table-header-bg-color: var(--hover-bg);
+        --el-table-row-hover-bg-color: var(--primary-color-light);
+        --el-table-border-color: var(--border-color);
+        --el-table-text-color: var(--text-primary);
+        --el-table-header-text-color: var(--text-secondary);
+    }
+
+    .competition-table .el-table__header th {
+        font-weight: 600;
+        background: var(--hover-bg);
+    }
+
+    .competition-table .el-table__row td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .competition-table .el-empty {
+        --el-empty-fill-color-0: var(--card-bg);
+        --el-empty-fill-color-1: var(--hover-bg);
+        --el-empty-fill-color-2: var(--hover-bg);
+        --el-empty-fill-color-3: var(--border-color);
+        --el-empty-fill-color-4: var(--border-color);
+        --el-empty-fill-color-5: var(--border-color-light);
+        --el-empty-fill-color-6: var(--border-color);
+        --el-empty-fill-color-7: var(--border-color-light);
+        --el-empty-fill-color-8: var(--border-color);
+        --el-empty-fill-color-9: var(--card-bg);
+        color: var(--text-secondary);
+    }
+
+    .pagination-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 18px;
+    }
+
+    .pagination-wrap .el-pagination {
+        --el-pagination-bg-color: var(--card-bg);
+        --el-pagination-text-color: var(--text-primary);
+        --el-pagination-button-bg-color: var(--card-bg);
+        --el-pagination-button-disabled-bg-color: var(--hover-bg);
+        --el-pagination-hover-color: var(--primary-color);
+    }
+
+    .detail-block {
+        margin-top: 18px;
+    }
+
+    .detail-block h3 {
+        margin: 0 0 8px;
+        color: var(--text-primary);
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .detail-block p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    @media (max-width: 1100px) {
+        .filter-bar {
+            flex-wrap: wrap;
+            overflow-x: visible;
+        }
+    }
+
+    .table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+
+    .pagination-wrap .el-pagination {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+        .competition-page {
+            padding: 16px;
+        }
+
+        .card-heading {
+            align-items: flex-start;
+        }
+
+        .card-heading-icon {
+            display: none;
+        }
+
+        .filter-keyword,
+        .filter-select,
+        .filter-select-small {
+            width: 100%;
+        }
+
+        .table-scroll .el-table {
+            min-width: 960px;
+        }
+
+        .pagination-wrap {
+            justify-content: center;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+
+        .pagination-wrap .el-pagination {
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .pagination-wrap .el-pagination__total,
+        .pagination-wrap .el-pagination__sizes,
+        .pagination-wrap .el-pagination__jump {
+            margin-right: 0;
+            margin-left: 0;
+            font-size: 12px;
+        }
+
+        .pagination-wrap .el-pagination button,
+        .pagination-wrap .el-pager li {
+            min-width: 28px;
+            height: 28px;
+            line-height: 28px;
+        }
+
+        .pagination-wrap .el-pagination .el-select {
+            width: 92px;
+        }
+
+        .pagination-wrap .el-pagination .el-input {
+            width: 42px;
+        }
+    }
+</style>
+
+<div class="competition-page" id="competitionApp">
+    <el-card class="content-card system-card" shadow="never">
+        <div class="card-heading">
+            <div>
+                <h2>大学生竞赛信息</h2>
+                <p>按时间查看大学生竞赛信息、报名时间与赛事安排，点击「访问官网」可跳转至竞赛官方网站。</p>
+            </div>
+            <div class="card-heading-icon" aria-hidden="true">🏆</div>
+        </div>
+
+        <el-tabs v-model="activeTab" :animated="false">
+            <el-tab-pane label="全部竞赛" name="all">
+                <div class="filter-bar">
+                    <el-input v-model="filters.keyword" class="filter-keyword" clearable
+                              placeholder="搜索竞赛名称/主办单位" @keyup.enter="handleQuery"></el-input>
+
+                    <el-select v-model="filters.compLevel" class="filter-select" clearable placeholder="竞赛级别">
+                        <el-option v-for="item in levelOptions" :key="item.value"
+                                   :label="item.label" :value="item.value"></el-option>
+                    </el-select>
+
+                    <el-select v-model="filters.compStatus" class="filter-select" clearable placeholder="竞赛状态">
+                        <el-option v-for="item in statusOptions" :key="item.value"
+                                   :label="item.label" :value="item.value"></el-option>
+                    </el-select>
+
+                    <el-select v-model="filters.year" class="filter-select filter-select-small" clearable placeholder="年份">
+                        <el-option v-for="year in yearOptions" :key="year"
+                                   :label="year + '年'" :value="String(year)"></el-option>
+                    </el-select>
+
+                    <el-select v-model="filters.month" class="filter-select filter-select-small" clearable placeholder="月份">
+                        <el-option v-for="month in monthOptions" :key="month"
+                                   :label="Number(month) + '月'" :value="month"></el-option>
+                    </el-select>
+
+                    <el-button type="primary" @click="handleQuery">查询</el-button>
+                    <el-button @click="resetFilters">重置</el-button>
+                </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="智能推荐" name="recommend">
+                <div class="recommend-tip">
+                    以下竞赛基于你的学业成绩与能力标签智能匹配，点击可一键添加至学习计划。
+                </div>
+            </el-tab-pane>
+        </el-tabs>
+
+<div class="table-scroll">
+<el-table v-loading="currentLoading" :data="currentRows" stripe border row-key="id"
+                  class="competition-table">
+            <el-table-column prop="compName" label="竞赛名称" min-width="240" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="organizer" label="主办单位" min-width="210" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="compLevel" label="竞赛级别" width="110"></el-table-column>
+            <el-table-column prop="compStatus" label="竞赛状态" width="110">
+                <template #default="{ row }">
+                    <el-tag size="small" effect="plain" :type="getStatusType(row.compStatus)">
+                        {{ row.compStatus || '未知' }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="registerEnd" label="报名截止时间" width="150">
+                <template #default="{ row }">{{ formatDate(row.registerEnd) }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="330" fixed="right">
+                <template #default="{ row }">
+                    <el-button link type="primary" @click="openDetail(row)">查看详情</el-button>
+                    <el-button link type="success" @click="openOfficial(row)">访问官网</el-button>
+                    <el-button type="primary" size="small" :loading="isAdding(row.id)"
+                               @click="addToPlan(row)">添加至学习计划</el-button>
+                </template>
+            </el-table-column>
+
+            <template #empty>
+                <el-empty :description="currentEmptyText"></el-empty>
+            </template>
+        </el-table>
+</div>
+
+        <div v-if="activeTab === 'all'" class="pagination-wrap">
+            <el-pagination :current-page="pagination.pageNum" :page-size="pagination.pageSize"
+                           :page-sizes="[10, 20, 50]" :total="pagination.total"
+                           layout="total, sizes, prev, pager, next, jumper"
+                           @size-change="handleSizeChange" @current-change="handleCurrentChange"></el-pagination>
+        </div>
+    </el-card>
+
+    <el-dialog v-model="detailVisible" title="竞赛详情" width="680px" append-to-body destroy-on-close>
+        <template v-if="detailCompetition">
+            <el-descriptions :column="1" border>
+                <el-descriptions-item label="竞赛名称">{{ detailCompetition.compName || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="主办单位">{{ detailCompetition.organizer || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="竞赛级别">{{ detailCompetition.compLevel || '--' }}</el-descriptions-item>
+                <el-descriptions-item label="竞赛状态">
+                    <el-tag size="small" effect="plain" :type="getStatusType(detailCompetition.compStatus)">
+                        {{ detailCompetition.compStatus || '未知' }}
+                    </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="竞赛时间">{{ detailCompetition.compTime || '以官网通知为准' }}</el-descriptions-item>
+                <el-descriptions-item label="报名截止">{{ formatDate(detailCompetition.registerEnd) }}</el-descriptions-item>
+                <el-descriptions-item label="官网链接">
+                    <el-link v-if="detailCompetition.officialUrl" type="primary"
+                             :href="detailCompetition.officialUrl" target="_blank"
+                             rel="noopener noreferrer">{{ detailCompetition.officialUrl }}</el-link>
+                    <span v-else>--</span>
+                </el-descriptions-item>
+            </el-descriptions>
+
+            <div class="detail-block">
+                <h3>竞赛简介</h3>
+                <p>{{ detailCompetition.compDesc || '暂无竞赛简介' }}</p>
+            </div>
+            <div class="detail-block">
+                <h3>参赛要求</h3>
+                <p>{{ detailCompetition.compRequirement || '请以竞赛官网发布的最新通知为准。' }}</p>
+            </div>
+        </template>
+
+        <template #footer>
+            <el-button @click="detailVisible = false">关闭</el-button>
+            <el-button :disabled="!detailCompetition || !detailCompetition.officialUrl"
+                       @click="openOfficial(detailCompetition)">访问官网</el-button>
+            <el-button type="primary" :loading="detailCompetition && isAdding(detailCompetition.id)"
+                       :disabled="!detailCompetition || !detailCompetition.id"
+                       @click="addToPlan(detailCompetition)">添加至学习计划</el-button>
+        </template>
+    </el-dialog>
+</div>
+
+<script>
+    (() => {
+        const {createApp, computed, onMounted, reactive, ref, watch} = Vue;
+        const {ElMessage} = ElementPlus;
+
+        const elementZhCnLocale = {
+            name: 'zh-cn',
+            el: {
+                pagination: {
+                    total: '共 {total} 条',
+                    pagesize: ' 条/页',
+                    goto: '前往',
+                    pageClassifier: '页',
+                    prev: '上一页',
+                    next: '下一页',
+                    page: '页',
+                    currentPage: '第 {pager} 页',
+                    prevPages: '向前 {pager} 页',
+                    nextPages: '向后 {pager} 页'
+                },
+                dialog: { close: '关闭' },
+                select: { loading: '加载中', noMatch: '无匹配数据', noData: '无数据', placeholder: '请选择' },
+                table: { emptyText: '暂无数据', confirmFilter: '筛选', resetFilter: '重置', sumText: '合计' }
+            }
+        };
+
+
+
+
+
+        const http = axios.create({
+            baseURL: '/student_system/api',
+            timeout: 15000
+        });
+
+        createApp({
+            setup() {
+                const activeTab = ref('all');
+
+                const allLoading = ref(false);
+                const recommendLoading = ref(false);
+                const allCompetitions = ref([]);
+                const recommendCompetitions = ref([]);
+
+                const addingMap = reactive({});
+                const detailVisible = ref(false);
+                const detailCompetition = ref(null);
+
+                const filters = reactive({
+                    keyword: '',
+                    compLevel: '',
+                    compStatus: '',
+                    year: '',
+                    month: ''
+                });
+                const pagination = reactive({
+                    pageNum: 1,
+                    pageSize: 10,
+                    total: 0
+                });
+
+                const levelOptions = [
+                    {label: '全部', value: ''},
+                    {label: '国家级', value: '国家级'},
+                    {label: '省级', value: '省级'},
+                    {label: '校级', value: '校级'}
+                ];
+
+                const statusOptions = [
+                    {label: '全部', value: ''},
+                    {label: '报名中', value: '报名中'},
+                    {label: '即将开始', value: '即将开始'},
+                    {label: '已结束', value: '已结束'}
+                ];
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+                const yearOptions = Array.from({length: 5}, (_, index) => currentYear - index);
+                const monthOptions = Array.from({length: 12}, (_, index) => String(index + 1).padStart(2, '0'));
+
+
+                filters.year = String(currentYear);
+                filters.month = currentMonth;
+
+                const currentRows = computed(() => {
+                    return activeTab.value === 'all'
+                        ? allCompetitions.value
+                        : recommendCompetitions.value;
+                });
+
+                const currentLoading = computed(() => {
+                    return activeTab.value === 'all'
+                        ? allLoading.value
+                        : recommendLoading.value;
+                });
+
+                const currentEmptyText = computed(() => {
+                    return activeTab.value === 'all'
+                        ? '暂无竞赛信息'
+                        : '暂无匹配的推荐竞赛，请先上传成绩单生成学业分析';
+                });
+
+                function redirectToLogin() {
+                    ElMessage.error('登录状态已失效，请重新登录');
+                    setTimeout(() => {
+                        window.top.location.href = '/student_system/login.html';
+                    }, 800);
+                }
+
+
+
+
+
+                function unwrapResult(response) {
+                    const payload = response?.data;
+                    if (payload?.code === 401) {
+                        redirectToLogin();
+                        const authError = new Error('AUTH_EXPIRED');
+                        authError.silent = true;
+                        throw authError;
+                    }
+                    if (payload?.code !== 200) {
+                        throw new Error(payload?.msg || '请求失败');
+                    }
+                    return payload.data;
+                }
+
+                function handleRequestError(error, fallbackMessage) {
+                    if (error?.silent) return;
+                    console.error(fallbackMessage, error);
+                    ElMessage.error(error?.message || fallbackMessage);
+                }
+
+
+
+
+                async function fetchAllCompetitions() {
+                    allLoading.value = true;
+                    try {
+                        const response = await http.get('/competition/list', {
+                            params: {
+                                keyword: filters.keyword || '',
+                                compLevel: filters.compLevel || '',
+                                compStatus: filters.compStatus || '',
+                                year: filters.year || '',
+                                month: filters.month || '',
+                                pageNum: pagination.pageNum,
+                                pageSize: pagination.pageSize
+                            }
+                        });
+
+                        const data = unwrapResult(response) || {};
+                        allCompetitions.value = Array.isArray(data.list) ? data.list : [];
+                        pagination.total = Number(data.total) || 0;
+                    } catch (error) {
+                        allCompetitions.value = [];
+                        pagination.total = 0;
+                        handleRequestError(error, '获取竞赛信息失败');
+                    } finally {
+                        allLoading.value = false;
+                    }
+                }
+
+                function handleQuery() {
+                    pagination.pageNum = 1;
+                    fetchAllCompetitions();
+                }
+
+                function resetFilters() {
+                    filters.keyword = '';
+                    filters.compLevel = '';
+                    filters.compStatus = '';
+                    filters.year = String(currentYear);
+                    filters.month = currentMonth;
+                    pagination.pageNum = 1;
+                    fetchAllCompetitions();
+                }
+
+                function handleSizeChange(size) {
+                    pagination.pageSize = size;
+                    pagination.pageNum = 1;
+                    fetchAllCompetitions();
+                }
+
+                function handleCurrentChange(page) {
+                    pagination.pageNum = page;
+                    fetchAllCompetitions();
+                }
+
+
+
+
+                async function fetchRecommendCompetitions() {
+                    recommendLoading.value = true;
+                    try {
+                        const response = await http.get('/scoreSummary/recommendCompetition');
+                        const data = unwrapResult(response);
+                        recommendCompetitions.value = Array.isArray(data) ? data.slice(0, 8) : [];
+                    } catch (error) {
+                        recommendCompetitions.value = [];
+                        handleRequestError(error, '获取推荐竞赛失败');
+                    } finally {
+                        recommendLoading.value = false;
+                    }
+                }
+
+                watch(activeTab, tabName => {
+                    if (tabName === 'recommend') {
+                        fetchRecommendCompetitions();
+                    }
+                });
+
+                function getStatusType(status) {
+                    const typeMap = {
+                        '报名中': 'success',
+                        '即将开始': 'primary',
+                        '已结束': 'info'
+                    };
+                    return typeMap[status] || 'info';
+                }
+
+                function formatDate(value) {
+                    if (!value) return '--';
+                    const text = String(value);
+                    const date = new Date(text.replace('T', ' ').replace(/-/g, '/'));
+                    if (Number.isNaN(date.getTime())) return text;
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return date.getFullYear() + '-' + month + '-' + day;
+                }
+
+                function openDetail(row) {
+                    detailCompetition.value = {...row};
+                    detailVisible.value = true;
+                }
+
+                function openOfficial(row) {
+                    if (!row?.officialUrl) {
+                        ElMessage.warning('该竞赛暂未配置官网地址');
+                        return;
+                    }
+                    window.open(row.officialUrl, '_blank', 'noopener,noreferrer');
+                }
+
+                function isAdding(competitionId) {
+                    return Boolean(addingMap[competitionId]);
+                }
+
+                async function addToPlan(row) {
+                    if (!row?.id) {
+                        ElMessage.warning('竞赛信息不完整，无法添加');
+                        return;
+                    }
+                    if (isAdding(row.id)) return;
+
+                    addingMap[row.id] = true;
+                    try {
+                        const response = await http.post('/studyPlan/addCompPlan', {
+                            competitionId: row.id
+                        });
+                        unwrapResult(response);
+                        ElMessage.success('已添加至学习计划，可前往学习计划页面查看倒计时');
+                    } catch (error) {
+                        handleRequestError(error, '添加至学习计划失败');
+                    } finally {
+                        delete addingMap[row.id];
+                    }
+                }
+
+                onMounted(() => {
+                    fetchAllCompetitions();
+                });
+
+                return {
+                    activeTab,
+                    allLoading,
+                    recommendLoading,
+                    filters,
+                    pagination,
+                    levelOptions,
+                    statusOptions,
+                    yearOptions,
+                    monthOptions,
+                    currentRows,
+                    currentLoading,
+                    currentEmptyText,
+                    detailVisible,
+                    detailCompetition,
+                    handleQuery,
+                    resetFilters,
+                    handleSizeChange,
+                    handleCurrentChange,
+                    getStatusType,
+                    formatDate,
+                    openDetail,
+                    openOfficial,
+                    isAdding,
+                    addToPlan
+                };
+            }
+        }).use(ElementPlus, { locale: elementZhCnLocale }).mount('#competitionApp');
+    })();
+</script>

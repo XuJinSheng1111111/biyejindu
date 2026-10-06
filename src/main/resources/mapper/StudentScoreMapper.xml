@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.StudentScoreMapper">
+
+    <select id="selectByCondition" resultType="pojo.StudentScore">
+        select * from student_score
+        where student_info_id = #{studentInfoId}
+        <if test="courseName != null and courseName != ''">
+            and course_name like concat('%', #{courseName},'%')
+        </if>
+        <choose>
+            <when test="startYear != null and term == '春' ">
+                and school_year = #{startYear} and term = '春'
+            </when>
+            <when test="startYear != null and term == '秋' ">
+                and school_year = #{startYear} and term = '秋'
+            </when>
+            <when test="startYear != null and (term == null or term == '')">
+                and (
+                (school_year = #{startYear} and term = '秋')
+                or
+                (school_year = #{endYear} and term = '春')
+                )
+            </when>
+            <when test="startYear == null and term != null and term != ''">
+                and term = #{term}
+            </when>
+            <otherwise></otherwise>
+        </choose>
+    </select>
+    <select id="selectAllByStudentInfoId" resultType="pojo.StudentScore">
+        select *
+        from student_score
+        where student_info_id = #{studentInfoId}
+        order by school_year asc, term asc, id asc
+    </select>
+
+    <select id="selectTermListByStudentInfoId" resultType="pojo.StudentScore">
+        select distinct school_year, term
+        from student_score
+        where student_info_id = #{studentInfoId}
+        order by school_year asc, term asc
+    </select>
+
+    <select id="selectByStudentAndTerm" resultType="pojo.StudentScore">
+        select *
+        from student_score
+        where student_info_id = #{studentInfoId}
+          and school_year = #{schoolYear}
+          and term = #{term}
+        order by id asc
+    </select>
+
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        insert into student_score
+        (school_year, term, course_no, course_name, serial_no, course_group,
+        final_score, total_score, gpa, credit, remark, exam_type, course_type, pass_flag, student_info_id)
+        values
+        <foreach collection="scoreList" item="item" separator=",">
+            (
+            #{item.schoolYear},
+            #{item.term},
+            #{item.courseNo},
+            #{item.courseName},
+            #{item.serialNo},
+            #{item.courseGroup},
+            #{item.finalScore},
+            #{item.totalScore},
+            #{item.gpa},
+            #{item.credit},
+            #{item.remark},
+            #{item.examType},
+            #{item.courseType},
+            #{item.passFlag},
+            #{item.studentInfoId}
+            )
+        </foreach>
+    </insert>
+    <delete id="deleteByStudentInfoId">
+        delete from student_score
+        where student_info_id = #{studentInfoId}
+    </delete>
+</mapper>

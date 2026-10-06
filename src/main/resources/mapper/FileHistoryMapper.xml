@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.FileHistoryMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into file_history
+        (file_name, course_sum, upload_time, state, student_info_id)
+        values (#{fileName}, #{courseSum}, #{uploadTime}, #{state}, #{studentInfoId})
+    </insert>
+
+    <select id="selectByStudentInfoId" resultType="pojo.File">
+        select id, file_name, course_sum, upload_time, state, student_info_id
+        from file_history
+        where student_info_id = #{studentInfoId}
+        order by upload_time desc, id desc
+    </select>
+    <delete id="deleteByStudentInfoId">
+        delete from file_history
+        where student_info_id = #{studentInfoId}
+    </delete>
+</mapper>

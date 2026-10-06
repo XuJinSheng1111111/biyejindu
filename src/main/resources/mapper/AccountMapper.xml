@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.AccountMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into account
+        (username, password, email, status, login_fail_count, slider_required)
+        values
+        (#{username}, #{password}, #{email}, 1, 0, 0)
+    </insert>
+
+    <select id="selectById" resultType="pojo.Account">
+        select id,
+               username,
+               password,
+               email,
+               create_time as createTime,
+               status,
+               login_fail_count as loginFailCount,
+               slider_required as sliderRequired
+        from account
+        where id = #{id}
+    </select>
+
+    <select id="selectByUsername" resultType="pojo.Account">
+        select id,
+               username,
+               password,
+               email,
+               create_time as createTime,
+               status,
+               login_fail_count as loginFailCount,
+               slider_required as sliderRequired
+        from account
+        where username = #{username}
+    </select>
+
+    <select id="selectByEmail" resultType="pojo.Account">
+        select id,
+               username,
+               password,
+               email,
+               create_time as createTime,
+               status,
+               login_fail_count as loginFailCount,
+               slider_required as sliderRequired
+        from account
+        where email = #{email}
+    </select>
+
+    <update id="updatePwdById">
+        update account
+        set password = #{password}
+        where id = #{id}
+    </update>
+
+    <update id="updateUsernameById">
+        update account
+        set username = #{username}
+        where id = #{id}
+    </update>
+
+    <update id="incrementLoginFailure">
+        update account
+        set slider_required = case
+                when login_fail_count + 1 >= 3 then 1
+                else slider_required
+            end,
+            login_fail_count = login_fail_count + 1
+        where id = #{id}
+    </update>
+
+    <update id="resetLoginSecurity">
+        update account
+        set login_fail_count = 0,
+            slider_required = 0
+        where id = #{id}
+    </update>
+    <delete id="deleteById">
+        delete from account
+        where id = #{id}
+    </delete>
+</mapper>

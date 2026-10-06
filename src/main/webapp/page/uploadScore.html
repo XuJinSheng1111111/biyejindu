@@ -1,0 +1,891 @@
+<style>
+    .page-wrap {
+        padding: 24px;
+        max-width: 1000px;
+        margin: 0 auto;
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .page-header,
+    .upload-card,
+    .result-card {
+        margin-bottom: 20px;
+        border-radius: 12px;
+        background: var(--card-bg-dark);
+        box-shadow: var(--shadow);
+    }
+
+    .page-header {
+        padding: 24px 28px;
+    }
+
+    .page-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 6px;
+        color: var(--text-primary);
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .page-header p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .upload-card {
+        padding: 28px;
+    }
+
+    .upload-zone {
+        padding: 50px 30px;
+        border: 2px dashed var(--upload-border);
+        border-radius: 10px;
+        background: var(--upload-bg);
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .2s ease, background .2s ease;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: var(--primary-color);
+        background: var(--primary-color-light);
+    }
+
+    .upload-zone .upload-icon {
+        margin-bottom: 14px;
+        color: var(--text-secondary);
+        font-size: 52px;
+    }
+
+    .upload-zone:hover .upload-icon {
+        color: var(--primary-color);
+    }
+
+    .upload-zone .up-title {
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-size: 16px;
+    }
+
+    .upload-zone .up-tip {
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+
+    .format-tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 18px;
+    }
+
+    .fmt-tag {
+        padding: 4px 12px;
+        border-radius: 14px;
+        background: var(--primary-color-light);
+        color: var(--primary-color);
+        font-size: 12px;
+    }
+
+    .file-list {
+        margin-top: 20px;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: var(--hover-bg);
+        transition: background .2s ease;
+    }
+
+    .file-item .f-icon {
+        flex-shrink: 0;
+        color: var(--primary-color);
+        font-size: 28px;
+    }
+
+    .file-item .f-icon.excel { color: var(--success-color); }
+    .file-item .f-icon.csv { color: var(--warning-color); }
+    .file-item .f-icon.pdf { color: var(--danger-color); }
+    .file-item .f-icon.word { color: var(--primary-color); }
+
+    .file-item .f-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .file-item .f-name {
+        overflow: hidden;
+        color: var(--text-primary);
+        font-size: 14px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-item .f-meta {
+        margin-top: 3px;
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+
+    .file-item .f-status { font-size: 12px; }
+    .file-item .f-actions { display: flex; gap: 8px; }
+
+    .result-card {
+        padding: 24px 28px;
+    }
+
+    .result-card h3 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 0 16px;
+        padding-left: 10px;
+        border-left: 3px solid var(--primary-color);
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .result-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .sum-item {
+        padding: 14px 8px;
+        border-radius: 8px;
+        background: var(--success-color-light);
+        text-align: center;
+    }
+
+    .sum-item.blue { background: var(--primary-color-light); }
+    .sum-item.orange { background: var(--warning-color-light); }
+    .sum-item.red { background: var(--danger-color-light); }
+
+    .sum-item .sv {
+        color: var(--success-color);
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .sum-item.blue .sv { color: var(--primary-color); }
+    .sum-item.orange .sv { color: var(--warning-color); }
+    .sum-item.red .sv { color: var(--danger-color); }
+
+    .sum-item .sl {
+        margin-top: 4px;
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+
+    .tip-box {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border-left: 4px solid var(--warning-color);
+        border-radius: 4px;
+        background: var(--warning-color-light);
+        color: var(--warning-color);
+        font-size: 13px;
+    }
+
+    .tip-box strong { color: var(--warning-color); }
+
+    #uploadApp .el-table {
+        --el-table-bg-color: var(--card-bg-dark);
+        --el-table-tr-bg-color: var(--card-bg-dark);
+        --el-table-header-bg-color: var(--hover-bg);
+        --el-table-row-hover-bg-color: var(--primary-color-light);
+        --el-table-border-color: var(--border-color);
+        --el-table-text-color: var(--text-primary);
+        --el-table-header-text-color: var(--text-secondary);
+    }
+
+    #uploadApp .el-descriptions {
+        --el-descriptions-table-border: 1px solid var(--border-color);
+        --el-descriptions-item-bordered-label-background: var(--hover-bg);
+        --el-descriptions-item-bordered-label-text-color: var(--text-secondary);
+        --el-descriptions-item-bordered-content-color: var(--text-primary);
+    }
+
+    @media (max-width: 700px) {
+        .page-wrap { padding: 16px; }
+        .upload-card,
+        .result-card,
+        .page-header { padding: 20px; }
+        .result-summary { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+
+<div class="page-wrap" id="uploadApp">
+    <div class="page-header">
+        <h2><el-icon><Upload/></el-icon> 上传成绩单</h2>
+        <p>支持xlsx/xls/csv格式成绩单上传，系统将自动解析成绩数据并同步到成绩页面</p>
+    </div>
+    <div class="upload-card">
+        <div class="upload-zone"
+             :class="{dragover: isDragover}"
+             @click="triggerPick"
+             @dragover.prevent="isDragover=true"
+             @dragleave="isDragover=false"
+             @drop.prevent="onDrop">
+            <div class="upload-icon">
+                <el-icon :size="52"><UploadFilled/></el-icon>
+            </div>
+            <div class="up-title">点击选择文件 或 拖拽文件到此处</div>
+            <div class="up-tip">单个文件不超过 10MB</div>
+            <div class="format-tags">
+                <span class="fmt-tag">Excel (.xlsx/.xls)</span>
+                <span class="fmt-tag">CSV (.csv)</span>
+            </div>
+        </div>
+        <input ref="fileInput" type="file" style="display:none;"
+               accept=".xlsx,.xls,.csv"
+               @change="onFileSelect"/>
+
+
+        <div class="file-list" v-if="fileList.length">
+            <div class="file-item" v-for="(f, idx) in fileList" :key="idx">
+                <div class="f-icon" :class="getIconClass(f.name)">
+                    <el-icon><component :is="getFileIcon(f.name)"/></el-icon>
+                </div>
+                <div class="f-info">
+                    <div class="f-name">{{ f.name }}</div>
+                    <div class="f-meta">{{ formatSize(f.size) }} · {{ getStatusText(f.status) }}</div>
+                </div>
+                <div class="f-status">
+                    <el-tag v-if="f.status==='uploading'" size="small" type="info">
+                        <el-icon class="is-loading"><Loading/></el-icon> 上传中
+                    </el-tag>
+                    <el-tag v-else-if="f.status==='success'" size="small" type="success">上传成功</el-tag>
+                    <el-tag v-else-if="f.status==='error'" size="small" type="danger">上传失败</el-tag>
+                    <el-tag v-else-if="f.status==='parsing'" size="small" type="warning">
+                        <el-icon class="is-loading"><Loading/></el-icon> 解析中
+                    </el-tag>
+                    <el-tag v-else size="small" type="info">等待上传</el-tag>
+                </div>
+                <div class="f-actions">
+                    <el-button v-if="f.status==='success'" size="small" type="primary" text @click="viewResult(f)">查看结果</el-button>
+                    <el-button size="small" type="danger" text @click="removeFile(idx)">删除</el-button>
+                </div>
+            </div>
+
+            <div style="margin-top:16px; display:flex; gap:10px; justify-content:flex-end;">
+                <el-button @click="clearAll">清空列表</el-button>
+                <el-button type="primary" @click="startUpload" :loading="uploading" :disabled="!canUpload">
+                    <el-icon><Upload/></el-icon> 开始上传并解析
+                </el-button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="result-card" v-if="parsedResult">
+        <h3>
+            <span><el-icon><Document/></el-icon> 解析结果预览</span>
+            <el-button type="primary" size="small" @click="confirmImport" :loading="importing">确认导入</el-button>
+        </h3>
+        <div class="tip-box">
+            <strong>提示：</strong> 以下为系统自动解析的成绩数据，请核对无误后点击「确认导入」将数据写入系统。
+            <br/>如果解析结果有误，请检查文件格式后重新上传。
+        </div>
+        <div class="result-summary">
+            <div class="sum-item blue">
+                <div class="sv">{{ parsedResult.courseCount || 0 }}</div>
+                <div class="sl">课程数量</div>
+            </div>
+            <div class="sum-item">
+                <div class="sv">{{ parsedResult.creditTotal || 0 }}</div>
+                <div class="sl">总学分</div>
+            </div>
+            <div class="sum-item orange">
+                <div class="sv">{{ parsedResult.avgScore || '--' }}</div>
+                <div class="sl">平均分</div>
+            </div>
+            <div class="sum-item red">
+                <div class="sv">{{ parsedResult.gpa || '--' }}</div>
+                <div class="sl">GPA</div>
+            </div>
+        </div>
+        <el-table :data="parsedResult.studentScores || []" border stripe size="small" max-height="360">
+            <el-table-column type="index" label="序号" width="60"></el-table-column>
+            <el-table-column prop="courseName" label="课程名称" min-width="160"></el-table-column>
+            <el-table-column prop="credit" label="学分" width="80"></el-table-column>
+            <el-table-column prop="totalScore" label="总评" width="90"></el-table-column>
+            <el-table-column prop="grade" label="等级" width="80">
+                <template #default="{row}">
+                    <el-tag :type="getGradeType(row.totalScore)" size="small">{{ getGrade(row.totalScore) }}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="term" label="学期" width="110"></el-table-column>
+            <el-table-column prop="courseType" label="课程类型" width="100"></el-table-column>
+        </el-table>
+    </div>
+
+
+    <div class="result-card">
+        <h3>
+            <span><el-icon><Files/></el-icon> 上传说明</span>
+        </h3>
+        <el-descriptions :column="1" border>
+            <el-descriptions-item label="支持的格式">
+                Excel（.xlsx/.xls）或 CSV（.csv，逗号分隔，支持 UTF-8/GB18030 编码）<br/>
+                第一行为表头，从第二行开始按固定列顺序解析。列顺序：学年,学期,课程号,课程名,课序号,课组,期末,总评,绩点,学分,备注,考试性质,课程性质,及格标志
+            </el-descriptions-item>
+            <el-descriptions-item label="格式示例">
+                2024-2025,秋,1096420,计算机导论,6,专业基础课程2024版,89.68,90,4,2,正常,正常考试,课程,及格<br/>
+                2024-2025,秋,1096435,程序设计基础,6,专业选修课程2024版,86,85,3.5,3.5,正常,正常考试,课程,及格
+            </el-descriptions-item>
+        </el-descriptions>
+    </div>
+
+    <h3 style="margin-top:24px;">
+        <span><el-icon><Clock/></el-icon> 上传历史记录</span>
+    </h3>
+    <el-table :data="uploadHistory" border stripe size="small" max-height="300" v-if="uploadHistory.length">
+        <el-table-column prop="fileName" label="文件名称" min-width="200"></el-table-column>
+        <el-table-column prop="courseSum" label="课程数" width="80"></el-table-column>
+        <el-table-column prop="uploadTime" label="上传时间" width="180"></el-table-column>
+        <el-table-column prop="state" label="状态" width="150">
+            <template #default="{row}">
+                <el-tag size="small" :type="row.state === 1 ? 'success' : 'info'">
+                    {{ row.state === 1 ? '已导入' : '未导入' }}
+                </el-tag>
+                <el-tag v-if="row.sessionOnly" size="small" type="warning" style="margin-left:6px;">本次会话</el-tag>
+            </template>
+        </el-table-column>
+    </el-table>
+    <el-empty v-else description="暂无上传记录"></el-empty>
+
+</div>
+
+<script>
+    (() => {
+
+        const {createApp, ref, reactive, computed, onMounted} = Vue;
+        const {ElMessage, ElMessageBox} = ElementPlus;
+        const CTX = '/student_system';
+        const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+        const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+        function xmlEscape(value) {
+            return String(value ?? '')
+                .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function parseCsvRows(text) {
+            const rows = [];
+            let row = [];
+            let cell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (inQuotes) {
+                    if (ch === '"') {
+                        if (text[i + 1] === '"') {
+                            cell += '"';
+                            i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        cell += ch;
+                    }
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inQuotes = true;
+                } else if (ch === ',') {
+                    row.push(cell);
+                    cell = '';
+                } else if (ch === '\r' || ch === '\n') {
+                    if (ch === '\r' && text[i + 1] === '\n') i++;
+                    row.push(cell);
+                    rows.push(row);
+                    row = [];
+                    cell = '';
+                } else {
+                    cell += ch;
+                }
+            }
+
+            if (cell !== '' || row.length) {
+                row.push(cell);
+                rows.push(row);
+            }
+            return rows;
+        }
+
+        async function readCsvFile(file) {
+            const buffer = await file.arrayBuffer();
+            try {
+                return new TextDecoder('utf-8', {fatal: true}).decode(buffer).replace(/^\uFEFF/, '');
+            } catch (e) {
+                try {
+                    return new TextDecoder('gb18030').decode(buffer).replace(/^\uFEFF/, '');
+                } catch (fallbackError) {
+                    return new TextDecoder().decode(buffer).replace(/^\uFEFF/, '');
+                }
+            }
+        }
+
+        function xlsxColumnName(index) {
+            let name = '';
+            let value = index + 1;
+            while (value > 0) {
+                const remainder = (value - 1) % 26;
+                name = String.fromCharCode(65 + remainder) + name;
+                value = Math.floor((value - 1) / 26);
+            }
+            return name;
+        }
+
+        function crc32(bytes) {
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i++) {
+                crc ^= bytes[i];
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+                }
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        function makeStoredZip(files) {
+            const encoder = new TextEncoder();
+            const localParts = [];
+            const centralParts = [];
+            const now = new Date();
+            const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((now.getSeconds() / 2) & 31);
+            const dosDate = (((now.getFullYear() - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
+            let offset = 0;
+
+            for (const entry of files) {
+                const nameBytes = encoder.encode(entry.name);
+                const data = typeof entry.data === 'string' ? encoder.encode(entry.data) : entry.data;
+                const crc = crc32(data);
+
+                const local = new Uint8Array(30 + nameBytes.length);
+                const localView = new DataView(local.buffer);
+                localView.setUint32(0, 0x04034B50, true);
+                localView.setUint16(4, 20, true);
+                localView.setUint16(6, 0x0800, true);
+                localView.setUint16(8, 0, true);
+                localView.setUint16(10, dosTime, true);
+                localView.setUint16(12, dosDate, true);
+                localView.setUint32(14, crc, true);
+                localView.setUint32(18, data.length, true);
+                localView.setUint32(22, data.length, true);
+                localView.setUint16(26, nameBytes.length, true);
+                localView.setUint16(28, 0, true);
+                local.set(nameBytes, 30);
+                localParts.push(local, data);
+
+                const central = new Uint8Array(46 + nameBytes.length);
+                const centralView = new DataView(central.buffer);
+                centralView.setUint32(0, 0x02014B50, true);
+                centralView.setUint16(4, 20, true);
+                centralView.setUint16(6, 20, true);
+                centralView.setUint16(8, 0x0800, true);
+                centralView.setUint16(10, 0, true);
+                centralView.setUint16(12, dosTime, true);
+                centralView.setUint16(14, dosDate, true);
+                centralView.setUint32(16, crc, true);
+                centralView.setUint32(20, data.length, true);
+                centralView.setUint32(24, data.length, true);
+                centralView.setUint16(28, nameBytes.length, true);
+                centralView.setUint16(30, 0, true);
+                centralView.setUint16(32, 0, true);
+                centralView.setUint16(34, 0, true);
+                centralView.setUint16(36, 0, true);
+                centralView.setUint32(38, 0, true);
+                centralView.setUint32(42, offset, true);
+                central.set(nameBytes, 46);
+                centralParts.push(central);
+
+                offset += local.length + data.length;
+            }
+
+            const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+            const end = new Uint8Array(22);
+            const endView = new DataView(end.buffer);
+            endView.setUint32(0, 0x06054B50, true);
+            endView.setUint16(4, 0, true);
+            endView.setUint16(6, 0, true);
+            endView.setUint16(8, files.length, true);
+            endView.setUint16(10, files.length, true);
+            endView.setUint32(12, centralSize, true);
+            endView.setUint32(16, offset, true);
+            endView.setUint16(20, 0, true);
+
+            return new Blob([...localParts, ...centralParts, end], {type: XLSX_MIME});
+        }
+
+        async function csvFileToXlsx(file) {
+            const rows = parseCsvRows(await readCsvFile(file))
+                .filter(row => row.some(cell => String(cell).trim() !== ''));
+            if (!rows.length) throw new Error('CSV 文件为空');
+
+            const columnCount = Math.max(14, ...rows.map(row => row.length));
+            const normalizedRows = rows.map(row => Array.from({length: columnCount}, (_, index) => row[index] ?? ''));
+            const sheetRows = normalizedRows.map((row, rowIndex) => {
+                const cells = row.map((cell, columnIndex) => {
+                    const reference = xlsxColumnName(columnIndex) + (rowIndex + 1);
+                    return `<c r="${reference}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(cell)}</t></is></c>`;
+                }).join('');
+                return `<row r="${rowIndex + 1}">${cells}</row>`;
+            }).join('');
+            const dimension = `A1:${xlsxColumnName(columnCount - 1)}${normalizedRows.length}`;
+
+            const worksheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="${dimension}"/><sheetData>${sheetRows}</sheetData></worksheet>`;
+            const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="成绩单" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+            const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+            const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+            const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+
+            return makeStoredZip([
+                {name: '[Content_Types].xml', data: contentTypes},
+                {name: '_rels/.rels', data: rootRels},
+                {name: 'xl/workbook.xml', data: workbook},
+                {name: 'xl/_rels/workbook.xml.rels', data: workbookRels},
+                {name: 'xl/worksheets/sheet1.xml', data: worksheet}
+            ]);
+        }
+
+        createApp({
+            setup() {
+                const fileInput = ref(null);
+                const isDragover = ref(false);
+                const uploading = ref(false);
+                const importing = ref(false);
+                const fileList = reactive([]);
+                const parsedResult = ref(null);
+                const uploadHistory = ref([]);
+
+                const canUpload = computed(() => fileList.some(f => f.status === 'pending' || f.status === 'error'));
+
+                function triggerPick() { fileInput.value && fileInput.value.click(); }
+
+                function onFileSelect(e) {
+                    addFiles(e.target.files);
+                    e.target.value = '';
+                }
+                function onDrop(e) {
+                    isDragover.value = false;
+                    addFiles(e.dataTransfer.files);
+                }
+                function addFiles(files) {
+
+                    const f = files && files[0];
+                    if (!f) return;
+                    if (fileList.length) {
+                        ElMessage.warning('一次只能上传并导入一个文件，请先移除已选文件');
+                        return;
+                    }
+                    const ext = '.' + f.name.split('.').pop().toLowerCase();
+                    if (!['.xlsx','.xls','.csv'].includes(ext)) {
+                        recordSessionHistory(f.name, 0, 0);
+                        ElMessage.warning('仅支持 xlsx/xls/csv 文件：' + f.name);
+                        return;
+                    }
+                    if (f.size > MAX_UPLOAD_SIZE) {
+                        recordSessionHistory(f.name, 0, 0);
+                        ElMessage.warning('文件超过10MB：' + f.name);
+                        return;
+                    }
+                    fileList.push({ name:f.name, size:f.size, status:'pending', file:f, result:null });
+                }
+
+                function removeFile(idx) {
+                    fileList.splice(idx,1);
+                    if (!fileList.length) parsedResult.value = null;
+                }
+                function clearAll() { fileList.splice(0, fileList.length); parsedResult.value = null; }
+
+                function formatSize(bytes) {
+                    if (bytes < 1024) return bytes + ' B';
+                    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+                    return (bytes/1024/1024).toFixed(2) + ' MB';
+                }
+                function getFileIcon(name) {
+                    const ext = name.split('.').pop().toLowerCase();
+                    if (['xlsx','xls'].includes(ext)) return 'Grid';
+                    if (ext === 'csv') return 'Document';
+                    if (ext === 'pdf') return 'Document';
+                    if (['doc','docx'].includes(ext)) return 'Document';
+                    return 'Files';
+                }
+                function getIconClass(name) {
+                    const ext = name.split('.').pop().toLowerCase();
+                    if (['xlsx','xls'].includes(ext)) return 'excel';
+                    if (ext === 'csv') return 'csv';
+                    if (ext === 'pdf') return 'pdf';
+                    if (['doc','docx'].includes(ext)) return 'word';
+                    return '';
+                }
+                function getStatusText(s) {
+                    return {pending:'等待上传', uploading:'上传中', parsing:'解析中', success:'上传成功', error:'上传失败'}[s] || s;
+                }
+                function getGrade(score) {
+                    score = Number(score);
+                    if (score >= 90) return '优秀';
+                    if (score >= 80) return '良好';
+                    if (score >= 70) return '中等';
+                    if (score >= 60) return '及格';
+                    return '不及格';
+                }
+                function getGradeType(score) {
+                    score = Number(score);
+                    if (score >= 90) return 'success';
+                    if (score >= 70) return '';
+                    if (score >= 60) return 'warning';
+                    return 'danger';
+                }
+
+                function toFiniteNumber(value) {
+                    const number = Number(value);
+                    return Number.isFinite(number) ? number : 0;
+                }
+
+                function normalizeParseResult(data) {
+                    const studentScores = Array.isArray(data)
+                        ? data
+                        : (Array.isArray(data?.studentScores) ? data.studentScores : []);
+                    const courseCount = studentScores.length;
+                    const creditTotal = studentScores.reduce((sum, item) => sum + toFiniteNumber(item.credit), 0);
+                    const avgScore = courseCount
+                        ? (studentScores.reduce((sum, item) => sum + toFiniteNumber(item.totalScore), 0) / courseCount).toFixed(2)
+                        : '--';
+                    const gpa = courseCount
+                        ? (studentScores.reduce((sum, item) => sum + toFiniteNumber(item.gpa), 0) / courseCount).toFixed(2)
+                        : '--';
+
+                    return {
+                        studentScores,
+                        courseCount,
+                        creditTotal: Number(creditTotal.toFixed(2)),
+                        avgScore,
+                        gpa
+                    };
+                }
+
+                function formatUploadTime(value) {
+                    if (!value) return new Date().toLocaleString('zh-CN', {hour12:false});
+                    const text = String(value).replace('T', ' ');
+                    return text.length > 19 ? text.substring(0, 19) : text;
+                }
+
+                function normalizeHistoryItem(item, sessionOnly = false) {
+                    const source = item || {};
+                    return {
+                        fileName: source.fileName || '--',
+                        courseSum: Number(source.courseSum ?? source.courseCount ?? 0) || 0,
+                        uploadTime: source.uploadTime ? formatUploadTime(source.uploadTime) : (sessionOnly ? formatUploadTime() : '--'),
+                        state: Number(source.state ?? source.status) === 1 ? 1 : 0,
+                        sessionOnly
+                    };
+                }
+
+                function recordSessionHistory(fileName, courseSum = 0, state = 0) {
+                    let item = uploadHistory.value.find(history =>
+                        history.sessionOnly && history.fileName === fileName
+                    );
+                    if (!item) {
+                        item = normalizeHistoryItem({fileName, courseSum, state}, true);
+                        uploadHistory.value.unshift(item);
+                    } else {
+                        item.courseSum = Number(courseSum) || 0;
+                        item.state = Number(state) === 1 ? 1 : 0;
+                        item.uploadTime = formatUploadTime();
+                    }
+                    return item;
+                }
+
+
+                async function fetchUploadHistory() {
+                    try {
+                        const res = await axios.get(CTX + '/api/score/uploadHistories');
+                        const data = res.data?.data;
+                        const records = Array.isArray(data)
+                            ? data
+                            : (Array.isArray(data?.records) ? data.records : []);
+                        if (res.data?.code === 200) {
+                            const backendItems = records.map(item => normalizeHistoryItem(item, false));
+                            const sessionItems = uploadHistory.value.filter(item => item.sessionOnly);
+                            const missingSessionItems = sessionItems.filter(sessionItem =>
+                                !backendItems.some(backendItem =>
+                                    backendItem.fileName === sessionItem.fileName &&
+                                    backendItem.courseSum === sessionItem.courseSum
+                                )
+                            );
+                            uploadHistory.value = [...backendItems, ...missingSessionItems];
+                        }
+                    } catch (e) {
+                        console.warn('历史上传记录加载失败，保留本次会话记录：', e);
+                    }
+                }
+
+
+                async function startUpload() {
+                    uploading.value = true;
+                    const toUpload = fileList.filter(f => f.status === 'pending' || f.status === 'error');
+
+                    try {
+                        for (const f of toUpload) {
+                            f.status = 'parsing';
+                            try {
+                                const ext = '.' + f.name.split('.').pop().toLowerCase();
+                                let uploadFile = f.file;
+                                let normalizedFileName = f.name.replace(/\.[^.]+$/, value => value.toLowerCase());
+
+
+
+                                if (ext === '.csv') {
+                                    try {
+                                        uploadFile = await csvFileToXlsx(f.file);
+                                    } catch (convertError) {
+                                        f.status = 'error';
+                                        recordSessionHistory(f.name, 0, 0);
+                                        ElMessage.error(f.name + ' CSV 解析失败：' + (convertError.message || '文件内容不正确'));
+                                        continue;
+                                    }
+                                }
+
+                                if (uploadFile.size > MAX_UPLOAD_SIZE) {
+                                    f.status = 'error';
+                                    recordSessionHistory(f.name, 0, 0);
+                                    ElMessage.error(f.name + ' 转换后的文件超过10MB');
+                                    continue;
+                                }
+
+                                const fd = new FormData();
+                                fd.append('file', uploadFile, normalizedFileName);
+
+
+                                const res = await axios.post(CTX + '/api/file/score', fd);
+                                if (res.data.code === 200) {
+                                    const result = normalizeParseResult(res.data.data);
+                                    if (!result.courseCount) {
+                                        f.status = 'error';
+                                        recordSessionHistory(f.name, 0, 0);
+                                        ElMessage.warning(f.name + ' 未解析到有效成绩数据');
+                                        continue;
+                                    }
+                                    const historyItem = recordSessionHistory(f.name, result.courseCount, 0);
+                                    f.status = 'success';
+                                    f.result = {...result, historyItem};
+                                    parsedResult.value = f.result;
+                                    ElMessage.success(f.name + ' 解析成功');
+                                } else {
+                                    f.status = 'error';
+                                    recordSessionHistory(f.name, 0, 0);
+                                    ElMessage.error(f.name + ' 解析失败：' + (res.data.msg || '未知错误'));
+                                }
+                            } catch(err) {
+                                f.status = 'error';
+                                recordSessionHistory(f.name, 0, 0);
+
+                                const errMsg = err.response?.data?.msg || err.message || '网络异常，请稍后重试';
+                                ElMessage.error(f.name + ' 上传失败：' + errMsg);
+                            }
+                        }
+                    } finally {
+                        uploading.value = false;
+                    }
+                }
+
+                function viewResult(f) {
+                    if (f.result) parsedResult.value = f.result;
+                    ElMessage.info('已切换显示该文件的解析结果');
+                }
+
+
+                function confirmImport() {
+                    if (!parsedResult.value) return;
+                    ElMessageBox.confirm(
+                        `确认将 ${parsedResult.value.courseCount || 0} 条成绩数据导入系统？后端会跳过已存在的相同课程。`,
+                        '确认导入',
+                        {
+                            confirmButtonText:'确认导入',
+                            cancelButtonText:'取消',
+                            type:'warning'
+                        }
+                    ).then(async () => {
+                        importing.value = true;
+                        try {
+
+                            const res = await axios.post(CTX + '/api/score/importConfirm', {});
+
+                            if (res.data.code === 200) {
+                                ElMessage.success('成绩导入成功！已同步到综合成绩/成绩明细页面');
+
+                                window.dispatchEvent(new CustomEvent('scoresUpdated'));
+
+                                if (parsedResult.value.historyItem) {
+                                    parsedResult.value.historyItem.state = 1;
+                                }
+                                parsedResult.value = null;
+                                fileList.splice(0, fileList.length);
+                                fetchUploadHistory();
+                            } else {
+                                if (parsedResult.value.historyItem) {
+                                    parsedResult.value.historyItem.state = 0;
+                                }
+                                parsedResult.value = null;
+                                fileList.splice(0, fileList.length);
+                                ElMessage.error('导入失败：' + (res.data.msg || '未知错误') + '，请重新上传文件');
+                            }
+                        } catch(e) {
+                            if (parsedResult.value.historyItem) {
+                                parsedResult.value.historyItem.state = 0;
+                            }
+                            const errMsg = e.response?.data?.msg || e.message || '网络异常，请稍后重试';
+                            ElMessage.error('导入失败：' + errMsg);
+                        } finally {
+                            importing.value = false;
+                        }
+                    }).catch(()=>{});
+                }
+
+                onMounted(() => {
+                    fetchUploadHistory();
+                });
+
+                return {
+                    fileInput, isDragover, uploading, importing, fileList, parsedResult, canUpload,
+                    triggerPick, onFileSelect, onDrop, addFiles, removeFile, clearAll,
+                    formatSize, getFileIcon, getIconClass, getStatusText,
+                    getGrade, getGradeType, startUpload, viewResult, confirmImport,
+                    uploadHistory, fetchUploadHistory
+                };
+            }
+        }).use(ElementPlus).mount('#uploadApp');
+
+
+        const iconList = ['Upload','UploadFilled','Files','Document','Grid','Loading','Delete'];
+        iconList.forEach(name => {
+            if (ElementPlusIconsVue[name]) {
+                const app = document.querySelector('#uploadApp').__vue_app__;
+            }
+        });
+    })();
+</script>

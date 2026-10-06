@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.CompetitionMapper">
+
+    <sql id="competitionColumns">
+        id,
+        comp_name,
+        organizer,
+        comp_level,
+        comp_status,
+        comp_time,
+        register_start,
+        register_end,
+        official_url,
+        comp_desc,
+        comp_requirement,
+        tags,
+        status
+    </sql>
+
+    <sql id="competitionConditions">
+        status = 1
+        <if test="keyword != null and keyword != ''">
+            and (
+            comp_name like concat('%', #{keyword}, '%')
+            or organizer like concat('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="compLevel != null and compLevel != ''">
+            and comp_level = #{compLevel}
+        </if>
+        <if test="compStatus != null and compStatus != ''">
+            and comp_status = #{compStatus}
+        </if>
+        <if test="year != null and year != ''">
+            and date_format(register_end, '%Y') = #{year}
+        </if>
+        <if test="month != null and month != ''">
+            and date_format(register_end, '%m') = #{month}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultType="pojo.Competition">
+        select
+        <include refid="competitionColumns"/>
+        from competition
+        <where>
+            <include refid="competitionConditions"/>
+        </where>
+        order by
+        case comp_status
+        when '报名中' then 1
+        when '即将开始' then 2
+        when '已结束' then 3
+        else 4
+        end,
+        register_end asc,
+        id desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="countPage" resultType="long">
+        select count(1)
+        from competition
+        <where>
+            <include refid="competitionConditions"/>
+        </where>
+    </select>
+
+    <select id="selectRecommendCandidates" resultType="pojo.Competition">
+        select
+        <include refid="competitionColumns"/>
+        from competition
+        where status = 1
+        and comp_status in ('报名中', '即将开始')
+        and (register_end is null or register_end >= now())
+        order by register_end asc, id desc
+        limit 100
+    </select>
+
+    <select id="selectById" resultType="pojo.Competition">
+        select
+        <include refid="competitionColumns"/>
+        from competition
+        where id = #{id}
+        and status = 1
+        limit 1
+    </select>
+
+</mapper>

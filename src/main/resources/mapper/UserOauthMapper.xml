@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.UserOauthMapper">
+
+    <select id="selectByPlatformAndOpenid" resultType="pojo.UserOauth">
+        select id, user_id, platform, openid, nickname, avatar, email, bind_time
+        from user_oauth
+        where platform = #{platform}
+          and openid = #{openid}
+        limit 1
+    </select>
+
+    <select id="selectByUserAndPlatform" resultType="pojo.UserOauth">
+        select id, user_id, platform, openid, nickname, avatar, email, bind_time
+        from user_oauth
+        where user_id = #{userId}
+          and platform = #{platform}
+        limit 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into user_oauth
+        (user_id, platform, openid, nickname, avatar, email, bind_time)
+        values
+        (#{userId}, #{platform}, #{openid}, #{nickname}, #{avatar}, #{email}, now())
+    </insert>
+</mapper>

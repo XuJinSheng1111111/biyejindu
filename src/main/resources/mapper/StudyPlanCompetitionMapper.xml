@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.StudyPlanCompetitionMapper">
+
+    <insert id="insertIgnore">
+        insert into study_plan_competition
+        (account_id, competition_id)
+        values
+        (#{accountId}, #{competitionId})
+        on duplicate key update
+            id = id
+    </insert>
+
+    <delete id="delete">
+        delete from study_plan_competition
+        where account_id = #{accountId}
+          and competition_id = #{competitionId}
+    </delete>
+
+</mapper>

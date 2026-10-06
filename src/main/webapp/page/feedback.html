@@ -1,0 +1,574 @@
+<style>
+    .feedback-page {
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px;
+        box-sizing: border-box;
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .feedback-intro {
+        margin-bottom: 20px;
+    }
+
+    .feedback-intro h2 {
+        margin: 0 0 6px;
+        color: var(--text-primary);
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .feedback-intro p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .feedback-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    .feedback-card {
+        width: 100%;
+    }
+
+    .feedback-card .el-card__header {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-color-light);
+    }
+
+    .feedback-card .el-card__body {
+        padding: 22px 24px;
+    }
+
+    .card-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .card-heading h3 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .list-card .card-heading h3 {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .card-heading p {
+        margin: 4px 0 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .feedback-form {
+        max-width: 960px;
+    }
+
+    .type-select {
+        width: 220px;
+        max-width: 100%;
+    }
+
+    .form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .feedback-card .el-textarea__inner,
+    .feedback-card .el-input__wrapper,
+    .feedback-card .el-select__wrapper {
+        background: var(--input-bg);
+        box-shadow: 0 0 0 1px var(--border-color) inset;
+    }
+
+    .feedback-card .el-textarea__inner,
+    .feedback-card .el-input__inner,
+    .feedback-card .el-select__selected-item {
+        color: var(--text-primary);
+    }
+
+    .feedback-submit-button {
+        --el-button-bg-color: var(--success-color);
+        --el-button-border-color: var(--success-color);
+        --el-button-hover-bg-color: #85ce61;
+        --el-button-hover-border-color: #85ce61;
+        --el-button-active-bg-color: #529b2e;
+        --el-button-active-border-color: #529b2e;
+    }
+
+    .table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+
+    .table-scroll .el-table {
+        min-width: 1220px;
+    }
+
+    .feedback-table {
+        width: 100%;
+        --el-table-bg-color: var(--card-bg);
+        --el-table-tr-bg-color: var(--card-bg);
+        --el-table-header-bg-color: var(--hover-bg);
+        --el-table-row-hover-bg-color: var(--primary-color-light);
+        --el-table-border-color: var(--border-color);
+        --el-table-text-color: var(--text-primary);
+        --el-table-header-text-color: var(--text-secondary);
+    }
+
+    .feedback-table .el-table__header th {
+        font-weight: 600;
+        background: var(--hover-bg);
+    }
+
+    .feedback-table .el-table__row td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        vertical-align: top;
+    }
+
+    .feedback-table .cell {
+        line-height: 1.6;
+    }
+
+    .multiline-cell {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .contact-cell {
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    .reply-empty {
+        color: var(--text-secondary);
+    }
+
+    .pagination-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 18px;
+    }
+
+    .pagination-wrap .el-pagination {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        --el-pagination-bg-color: var(--card-bg);
+        --el-pagination-text-color: var(--text-primary);
+        --el-pagination-button-bg-color: var(--card-bg);
+        --el-pagination-button-disabled-bg-color: var(--hover-bg);
+        --el-pagination-hover-color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .feedback-page {
+            padding: 16px;
+        }
+
+        .feedback-intro h2 {
+            font-size: 18px;
+        }
+
+        .feedback-card .el-card__header,
+        .feedback-card .el-card__body {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .card-heading {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-actions {
+            width: 100%;
+        }
+
+        .form-actions .el-button {
+            flex: 1;
+        }
+
+        .pagination-wrap {
+            justify-content: center;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+
+        .pagination-wrap .el-pagination {
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .pagination-wrap .el-pagination__total,
+        .pagination-wrap .el-pagination__sizes,
+        .pagination-wrap .el-pagination__jump {
+            margin-right: 0;
+            margin-left: 0;
+            font-size: 12px;
+        }
+
+        .pagination-wrap .el-pagination button,
+        .pagination-wrap .el-pager li {
+            min-width: 28px;
+            height: 28px;
+            line-height: 28px;
+        }
+
+        .pagination-wrap .el-pagination .el-select {
+            width: 92px;
+        }
+
+        .pagination-wrap .el-pagination .el-input {
+            width: 42px;
+        }
+    }
+</style>
+
+<div class="feedback-page">
+    <div id="feedbackApp">
+        <div class="feedback-intro">
+            <h2>意见反馈</h2>
+            <p>提交问题、建议或使用咨询，我们会尽快查看并处理。</p>
+        </div>
+
+        <div class="feedback-sections">
+            <el-card class="feedback-card submit-card system-card" shadow="never">
+                <template #header>
+                    <div class="card-heading">
+                        <div>
+                            <h3>提交反馈</h3>
+                            <p>请尽量填写完整信息，便于我们快速定位和处理问题。</p>
+                        </div>
+                    </div>
+                </template>
+                <el-form ref="formRef" :model="form" :rules="rules" label-width="88px"
+                         class="feedback-form" @submit.prevent="submitForm">
+                    <el-form-item label="反馈类型" prop="type">
+                        <el-select v-model="form.type" class="type-select" placeholder="请选择反馈类型">
+                            <el-option v-for="item in typeOptions" :key="item.value"
+                                       :label="item.label" :value="item.value"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="反馈内容" prop="content">
+                        <el-input
+                                v-model="form.content"
+                                type="textarea"
+                                :autosize="{minRows: 5, maxRows: 8}"
+                                maxlength="2000"
+                                show-word-limit
+                                placeholder="请详细描述你遇到的问题或建议，便于我们快速定位和处理"></el-input>
+                    </el-form-item>
+                    <el-form-item label="联系方式" prop="contact">
+                        <el-input
+                                v-model="form.contact"
+                                maxlength="100"
+                                show-word-limit
+                                clearable
+                                placeholder="手机号或邮箱（选填）"></el-input>
+                    </el-form-item>
+                    <el-form-item>
+                        <div class="form-actions">
+                            <el-button type="success" class="feedback-submit-button"
+                                       :loading="submitting" :disabled="submitting"
+                                       @click="submitForm">
+                                提交反馈
+                            </el-button>
+                            <el-button :disabled="submitting" @click="resetForm">重置</el-button>
+                        </div>
+                    </el-form-item>
+                </el-form>
+            </el-card>
+
+            <el-card class="feedback-card list-card system-card" shadow="never">
+                <template #header>
+                    <div class="card-heading">
+                        <div>
+                            <h3>我的反馈记录</h3>
+                            <p>查看历史提交内容、处理状态和官方回复。</p>
+                        </div>
+                        <el-button link type="success" :loading="loading" @click="loadFeedback">刷新</el-button>
+                    </div>
+                </template>
+
+                <div class="table-scroll">
+                    <el-table v-loading="loading" :data="pagedFeedbackList" class="feedback-table"
+                              stripe border table-layout="fixed" row-key="id">
+                        <el-table-column label="类型" width="110" align="center">
+                            <template #default="{ row }">
+                                <el-tag size="small" effect="plain" :type="typeMeta(row.type).tagType">
+                                    {{ typeMeta(row.type).label }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="反馈内容" min-width="360">
+                            <template #default="{ row }">
+                                <div class="multiline-cell">{{ row.content }}</div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="联系方式" width="150" align="center">
+                            <template #default="{ row }">
+                                <span v-if="row.contact" class="contact-cell">{{ row.contact }}</span>
+                                <span v-else class="reply-empty">--</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="状态" width="100" align="center">
+                            <template #default="{ row }">
+                                <el-tag size="small" effect="plain" :type="statusMeta(row.status).tagType">
+                                    {{ statusMeta(row.status).label }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="官方回复" min-width="300">
+                            <template #default="{ row }">
+                                <div v-if="row.reply" class="multiline-cell">{{ row.reply }}</div>
+                                <span v-else class="reply-empty">暂无回复</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="createTime" label="提交时间" width="180" align="center"></el-table-column>
+                        <template #empty>
+                            <el-empty description="暂无反馈记录"></el-empty>
+                        </template>
+                    </el-table>
+                </div>
+
+                <div v-if="pagination.total > 0" class="pagination-wrap">
+                    <el-pagination
+                            :current-page="pagination.pageNum"
+                            :page-size="pagination.pageSize"
+
+                            :page-sizes="[5, 10, 20, 50]"
+                            :total="pagination.total"
+                            layout="total, sizes, prev, pager, next, jumper"
+                            @size-change="handleSizeChange"
+                            @current-change="handleCurrentChange"></el-pagination>
+                </div>
+            </el-card>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const {createApp, computed, onMounted, reactive, ref} = Vue;
+        const {ElMessage} = ElementPlus;
+
+        const elementZhCnLocale = {
+            name: 'zh-cn',
+            el: {
+                pagination: {
+                    total: '共 {total} 条',
+                    pagesize: ' 条/页',
+                    goto: '前往',
+                    pageClassifier: '页',
+                    prev: '上一页',
+                    next: '下一页',
+                    page: '页',
+                    currentPage: '第 {pager} 页',
+                    prevPages: '向前 {pager} 页',
+                    nextPages: '向后 {pager} 页'
+                },
+                dialog: { close: '关闭' },
+                select: { loading: '加载中', noMatch: '无匹配数据', noData: '无数据', placeholder: '请选择' },
+                table: { emptyText: '暂无数据', confirmFilter: '筛选', resetFilter: '重置', sumText: '合计' }
+            }
+        };
+        const CTX = '/student_system';
+        const API = {
+            submit: CTX + '/api/feedback/submit',
+            my: CTX + '/api/feedback/my'
+        };
+
+        const app = createApp({
+            setup() {
+                const formRef = ref(null);
+                const submitting = ref(false);
+                const loading = ref(false);
+                const feedbackList = ref([]);
+                const typeOptions = [
+                    {label: '问题反馈', value: 'bug'},
+                    {label: '功能建议', value: 'suggest'},
+                    {label: '使用咨询', value: 'consult'}
+                ];
+                const PHONE_PATTERN = /^1[3-9]\d{9}$/;
+                const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+                const form = reactive({
+                    type: 'suggest',
+                    content: '',
+                    contact: ''
+                });
+                const rules = {
+                    type: [{required: true, message: '请选择反馈类型', trigger: 'change'}],
+                    content: [{
+                        validator: (rule, value, callback) => {
+                            if (!value || !value.trim()) {
+                                callback(new Error('请输入反馈内容'));
+                            } else if (value.trim().length > 2000) {
+                                callback(new Error('反馈内容不能超过2000字'));
+                            } else {
+                                callback();
+                            }
+                        },
+                        trigger: 'blur'
+                    }],
+                    contact: [
+                        {
+                            max: 100,
+                            message: '联系方式不能超过100字',
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: (rule, value, callback) => {
+                                const contact = value ? value.trim() : '';
+                                if (!contact) {
+                                    callback();
+                                    return;
+                                }
+                                if (!PHONE_PATTERN.test(contact) && !EMAIL_PATTERN.test(contact)) {
+                                    callback(new Error('请输入正确的手机号或邮箱'));
+                                    return;
+                                }
+                                callback();
+                            },
+                            trigger: 'blur'
+                        }
+                    ]
+                };
+                const pagination = reactive({
+                    pageNum: 1,
+                    pageSize: 5,
+                    total: 0
+                });
+
+                const pagedFeedbackList = computed(() => {
+                    const start = (pagination.pageNum - 1) * pagination.pageSize;
+                    return feedbackList.value.slice(start, start + pagination.pageSize);
+                });
+
+                const typeMeta = value => {
+                    const map = {
+                        bug: {label: '问题反馈', tagType: 'danger'},
+                        suggest: {label: '功能建议', tagType: 'primary'},
+                        consult: {label: '使用咨询', tagType: 'info'}
+                    };
+                    return map[value] || {label: '其他', tagType: 'info'};
+                };
+
+                const statusMeta = value => {
+                    const map = {
+                        0: {label: '待处理', tagType: 'info'},
+                        1: {label: '处理中', tagType: 'primary'},
+                        2: {label: '已回复', tagType: 'success'},
+                        3: {label: '已关闭', tagType: 'info'}
+                    };
+                    return map[Number(value)] || {label: '未知', tagType: 'info'};
+                };
+
+                const loadFeedback = async () => {
+                    loading.value = true;
+                    try {
+                        const response = await axios.get(API.my);
+                        const result = response.data;
+                        if (result?.code !== 200) {
+                            throw new Error(result?.msg || '反馈记录加载失败');
+                        }
+                        feedbackList.value = Array.isArray(result.data) ? result.data : [];
+                        pagination.total = feedbackList.value.length;
+                        const maxPage = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
+                        if (pagination.pageNum > maxPage) {
+                            pagination.pageNum = maxPage;
+                        }
+                    } catch (error) {
+                        ElMessage.error(error.response?.data?.msg || error.message || '反馈记录加载失败');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const handleSizeChange = size => {
+                    pagination.pageSize = size;
+                    pagination.pageNum = 1;
+                };
+
+                const handleCurrentChange = page => {
+                    pagination.pageNum = page;
+                };
+
+                const resetForm = () => {
+                    form.type = 'suggest';
+                    form.content = '';
+                    form.contact = '';
+                    formRef.value?.clearValidate();
+                };
+
+                const submitForm = () => {
+                    formRef.value.validate(async valid => {
+                        if (!valid) return;
+                        submitting.value = true;
+                        try {
+                            const response = await axios.post(API.submit, {
+                                type: form.type,
+                                content: form.content.trim(),
+                                contact: form.contact.trim() || null
+                            });
+                            const result = response.data;
+                            if (result?.code !== 200) {
+                                throw new Error(result?.msg || '反馈提交失败');
+                            }
+                            ElMessage.success('反馈提交成功，感谢你的反馈');
+                            resetForm();
+                            pagination.pageNum = 1;
+                            await loadFeedback();
+                        } catch (error) {
+                            ElMessage.error(error.response?.data?.msg || error.message || '反馈提交失败');
+                        } finally {
+                            submitting.value = false;
+                        }
+                    });
+                };
+
+                onMounted(loadFeedback);
+
+                return {
+                    formRef,
+                    form,
+                    rules,
+                    typeOptions,
+                    submitting,
+                    loading,
+                    feedbackList,
+                    pagination,
+                    pagedFeedbackList,
+                    typeMeta,
+                    statusMeta,
+                    loadFeedback,
+                    handleSizeChange,
+                    handleCurrentChange,
+                    resetForm,
+                    submitForm
+                };
+            }
+        });
+
+        app.use(ElementPlus, { locale: elementZhCnLocale });
+        app.mount('#feedbackApp');
+    })();
+</script>

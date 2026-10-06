@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mapper.EmailVerifyCodeMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into email_verify_code
+        (email, code, expire_time, used, create_time)
+        values
+        (#{email}, #{code}, #{expireTime}, 0, now())
+    </insert>
+
+    <select id="selectLatestByEmail" resultType="pojo.EmailVerifyCode">
+        select id, email, code, expire_time, used, create_time
+        from email_verify_code
+        where email = #{email}
+        order by id desc
+        limit 1
+    </select>
+
+    <update id="markUsed">
+        update email_verify_code
+        set used = 1
+        where id = #{id}
+    </update>
+
+    <update id="disableOldCode">
+        UPDATE email_verify_code SET used = 1
+        WHERE email = #{email} AND used = 0
+    </update>
+
+    <select id="countTodayByEmail" resultType="int">
+        select count(1)
+        from email_verify_code
+        where email = #{email}
+          and create_time &gt;= curdate()
+    </select>
+</mapper>

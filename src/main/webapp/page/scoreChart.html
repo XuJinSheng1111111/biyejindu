@@ -1,0 +1,424 @@
+<style>
+    .page-wrap { padding: 24px; max-width: 1400px; margin: 0 auto; position: relative; }
+    .page-wrap * { box-sizing: border-box; }
+
+    .toolbar { background: var(--card-bg); border-radius: 10px; padding: 16px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .term-tag { background: var(--primary-color); color: var(--white); padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+    .toolbar-right { display: flex; align-items: center; gap: 10px; }
+    .search-input { width: 220px; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; outline: none; transition: border-color .2s, box-shadow .2s; }
+    .search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(64,158,255,.15); }
+    select.sel { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; outline: none; background: var(--card-bg); transition: border-color .2s; }
+    select.sel:focus { border-color: var(--primary-color); }
+    .btn-primary { background: var(--primary-color); color: var(--white); border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background .2s, transform .15s; }
+    .btn-primary:hover { background: var(--primary-color-hover); }
+    .btn-primary:active { transform: scale(.96); }
+    .btn-ghost { background: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color); padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all .2s; }
+    .btn-ghost:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+    .charts-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .chart-card { background: var(--card-bg); border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); overflow: hidden; transition: box-shadow .25s; }
+    .chart-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.09); }
+    .chart-card.full { margin-bottom: 20px; }
+    .card-title { padding: 18px 24px 14px; font-size: 16px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--bg-color); display: flex; align-items: center; gap: 10px; }
+    .card-title::before { content: ''; display: inline-block; width: 4px; height: 16px; background: var(--primary-color); border-radius: 2px; }
+    .count-badge { margin-left: auto; background: var(--primary-color-light); color: var(--primary-color); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 12px; font-variant-numeric: tabular-nums; }
+    .scroll-hint { display: none; font-size: 11px; color: var(--warning-color); background: var(--warning-color-light); padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
+    .scroll-hint.show { display: inline-block; animation: hintPulse 2s ease-in-out infinite; }
+    @keyframes hintPulse { 50% { opacity: .5; } }
+
+
+    .chart-box { width: 100%; height: 440px; }
+
+    .chart-scroll { overflow-x: auto; overflow-y: hidden; }
+    .chart-scroll::-webkit-scrollbar { height: 8px; }
+    .chart-scroll::-webkit-scrollbar-track { background: var(--hover-bg); }
+    .chart-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    .chart-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+    .chart-box-dyn { height: 420px; min-width: 100%; }
+
+    .page-footer { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 16px 0; }
+    @media (max-width: 900px) { .charts-duo { grid-template-columns: 1fr; } }
+
+
+    .loading-mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.75); display: none; align-items: center; justify-content: center; z-index: 999; border-radius: 10px; }
+    .loading-mask.show { display: flex; }
+    .loading-content { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--text-secondary); font-size: 14px; }
+    .loading-spinner { width: 36px; height: 36px; border: 3px solid var(--border-color-light); border-top-color: var(--primary-color); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-primary:disabled, .btn-ghost:disabled, select.sel:disabled, .search-input:disabled { opacity: .6; cursor: not-allowed; pointer-events: none; }
+</style>
+
+<div id="loadingMask" class="loading-mask">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <span>数据加载中...</span>
+    </div>
+</div>
+
+<div class="page-wrap">
+
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <span class="term-tag">学业管理 · 统计图表</span>
+            <label for="yearSel">
+                <select class="sel" id="yearSel">
+                    <option value="">全部学年</option>
+                    <option value="2025-2026">2025-2026</option>
+                    <option value="2024-2025">2024-2025</option>
+                </select>
+            </label>
+            <label for="termSel">
+                <select class="sel" id="termSel">
+                    <option value="">全部学期</option>
+                    <option value="春">春季</option>
+                    <option value="秋">秋季</option>
+                </select>
+            </label>
+        </div>
+        <div class="toolbar-right">
+            <label for="searchInput">
+                <input id="searchInput" class="search-input" placeholder="课程名筛选">
+            </label>
+            <button id="searchBtn" class="btn-primary">筛选</button>
+            <button id="resetBtn" class="btn-ghost">重置</button>
+        </div>
+    </div>
+
+
+    <div class="charts-duo">
+        <div class="chart-card">
+            <div class="card-title">总评成绩等级分布</div>
+            <div id="chart-pie" class="chart-box"></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-title">学分占比（按课程组）</div>
+            <div id="chart-ring" class="chart-box"></div>
+        </div>
+    </div>
+
+
+    <div class="chart-card full">
+        <div class="card-title">各科期末 vs 总评对比<span class="scroll-hint" id="hint-bar">⇆ 课程较多，可左右滑动</span><span class="count-badge" id="badge-bar"></span></div>
+        <div class="chart-scroll"><div id="chart-bar" class="chart-box-dyn"></div></div>
+    </div>
+    <div class="chart-card full">
+        <div class="card-title">学分与绩点分析<span class="scroll-hint" id="hint-mix">⇆ 课程较多，可左右滑动</span><span class="count-badge" id="badge-mix"></span></div>
+        <div class="chart-scroll"><div id="chart-mix" class="chart-box-dyn"></div></div>
+    </div>
+    <div class="chart-card full">
+        <div class="card-title">期末与总评差值（平时成绩贡献）<span class="scroll-hint" id="hint-diff">⇆ 课程较多，可左右滑动</span><span class="count-badge" id="badge-diff"></span></div>
+        <div class="chart-scroll"><div id="chart-diff" class="chart-box-dyn"></div></div>
+    </div>
+    <div class="chart-card full">
+        <div class="card-title"><span id="radarTitle">绩点雷达图（各课绩点分布）</span><span class="scroll-hint" id="hint-radar">⇆ 课程较多，可左右滑动</span><span class="count-badge" id="badge-radar"></span></div>
+        <div class="chart-scroll"><div id="chart-radar" class="chart-box-dyn"></div></div>
+    </div>
+
+    <div class="page-footer">成绩统计图表页 · 共 <span id="totalNum">0</span> 门课程参与统计</div>
+</div>
+
+<script>
+    (() => {
+        const $ = id => document.getElementById(id);
+        const charts = {};
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+
+        let currentData = [], isLoading = false;
+
+
+
+        const short = (s, n = 10) => s.length > n ? s.slice(0, n) + '…' : s;
+
+        const grad = (a, b) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: a }, { offset: 1, color: b }]);
+
+        const chart = (key, box) => {
+            const c = charts[key] ||= echarts.init(box);
+            (window.__pageCharts ||= {})[key] = c;
+            return c;
+        };
+
+        const fit = (box, count, slot, hintId) => {
+            box.style.width = count * slot + 'px';
+            $(hintId)?.classList.toggle('show', count * slot > box.parentElement.clientWidth);
+        };
+
+        const catAxis = names => ({
+            type: 'category', data: names,
+            axisTick: { alignWithLabel: true },
+            axisLabel: { interval: 0, rotate: 30, fontSize: 11, hideOverlap: true }
+        });
+        const ANIM = { animationDuration: 700, animationEasing: 'cubicOut' };
+        const GRID = { left: 30, right: 24, containLabel: true };
+
+
+        function setLoadingState(loading) {
+            isLoading = loading;
+            $('loadingMask').classList.toggle('show', loading);
+            ['searchBtn', 'resetBtn', 'yearSel', 'termSel', 'searchInput'].forEach(id => $(id).disabled = loading);
+        }
+
+        const notifyError = message => {
+            const messageApi = window.ElementPlus?.ElMessage;
+            if (messageApi?.error) messageApi.error(message);
+            else window.alert(message);
+        };
+
+        async function fetchScoreData(params) {
+            try {
+                const res = await axios.post('/student_system/api/score/scoreList', params);
+                const result = res.data;
+                if (result?.code === 401) {
+                    window.top.location.href = '/student_system/login.html';
+                    return [];
+                }
+                if (result.code !== 200) { notifyError(result.msg || "获取成绩失败"); return []; }
+                return result.data || [];
+            } catch (err) {
+                console.error("请求失败：", err);
+                notifyError("数据加载失败，请稍后重试！");
+                return [];
+            }
+        }
+
+
+        const renderBar = data => {
+            const box = $('chart-bar');
+            fit(box, data.length, 64, 'hint-bar');
+            const c = chart('bar', box);
+            $('badge-bar').textContent = data.length + ' 门';
+            c.resize();
+            c.setOption({
+                ...ANIM,
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                legend: { data: ['期末成绩', '总评成绩'], top: 8 },
+                grid: { ...GRID, top: 46, bottom: 10 },
+                xAxis: catAxis(data.map(i => short(i.courseName))),
+                yAxis: { type: 'value', name: '分数', min: 60, max: 100 },
+                series: [
+                    { name: '期末成绩', type: 'bar', data: data.map(i => i.finalScore),
+                        barWidth: 12, barGap: '60%',
+                        itemStyle: { color: themeCssVar('--text-secondary'), borderRadius: [4, 4, 0, 0] },
+                        label: { show: true, position: 'top', fontSize: 10, color: themeCssVar('--text-secondary') },
+                        emphasis: { focus: 'series' } },
+                    { name: '总评成绩', type: 'bar', data: data.map(i => i.totalScore),
+                        barWidth: 12,
+                        itemStyle: { color: grad(themeCssVar('--primary-color-hover'), themeCssVar('--primary-color')), borderRadius: [4, 4, 0, 0] },
+                        label: { show: true, position: 'top', fontSize: 10, fontWeight: 'bold', color: themeCssVar('--primary-color') },
+                        emphasis: { focus: 'series' } }
+                ]
+            });
+        };
+
+
+        const renderPie = data => {
+            const c = chart('pie', $('chart-pie'));
+            const lv = [0, 0, 0, 0, 0];
+            data.forEach(i => { const s = i.totalScore; lv[s >= 90 ? 0 : s >= 80 ? 1 : s >= 70 ? 2 : s >= 60 ? 3 : 4]++; });
+            c.setOption({
+                ...ANIM,
+                tooltip: { trigger: 'item', formatter: '{b}：{c}门 ({d}%)' },
+                legend: { bottom: 6, left: 'center', type: 'scroll', itemWidth: 12, itemHeight: 12, itemGap: 16 },
+                color: [themeCssVar('--success-color'), themeCssVar('--primary-color'), themeCssVar('--warning-color'), themeCssVar('--danger-color'), themeCssVar('--text-secondary')],
+                graphic: { type: 'text', left: 'center', top: '37%',
+                    style: { text: data.length + '\n门课程', fill: themeCssVar('--text-primary'), fontSize: 18, fontWeight: 700, lineHeight: 24, textAlign: 'center' } },
+                series: [{ type: 'pie', radius: ['38%', '62%'], center: ['50%', '44%'],
+                    itemStyle: { borderRadius: 6, borderColor: themeCssVar('--card-bg'), borderWidth: 2 },
+                    label: { formatter: '{b}\n{c}门', fontSize: 11 },
+                    emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,.15)' } },
+                    data: [
+                        { value: lv[0], name: '优秀(90+)' }, { value: lv[1], name: '良好(80-89)' },
+                        { value: lv[2], name: '中等(70-79)' }, { value: lv[3], name: '及格(60-69)' },
+                        { value: lv[4], name: '不及格(<60)' }
+                    ] }]
+            });
+        };
+
+
+        const renderMix = data => {
+            const box = $('chart-mix');
+            fit(box, data.length, 56, 'hint-mix');
+            const c = chart('mix', box);
+            $('badge-mix').textContent = data.length + ' 门';
+            c.resize();
+            c.setOption({
+                ...ANIM,
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                legend: { data: ['学分', '绩点'], top: 8 },
+                grid: { ...GRID, top: 46, bottom: 10 },
+                xAxis: catAxis(data.map(i => short(i.courseName))),
+                yAxis: [
+                    { type: 'value', name: '学分', min: 0 },
+                    { type: 'value', name: '绩点', min: 0, max: 5, splitLine: { show: false } }
+                ],
+                series: [
+                    { name: '学分', type: 'bar', data: data.map(i => i.credit), barWidth: 16,
+                        itemStyle: { color: grad(themeCssVar('--success-color'), themeCssVar('--success-color')), borderRadius: [4, 4, 0, 0] },
+                        label: { show: true, position: 'top', fontSize: 10, color: themeCssVar('--success-color') },
+                        emphasis: { focus: 'series' } },
+                    { name: '绩点', type: 'line', yAxisIndex: 1, data: data.map(i => i.gpa),
+                        smooth: true, symbolSize: 8, z: 3,
+                        lineStyle: { width: 2.5, color: themeCssVar('--danger-color') },
+                        itemStyle: { color: themeCssVar('--danger-color'), borderColor: themeCssVar('--card-bg'), borderWidth: 1.5 },
+                        areaStyle: { color: grad('rgba(245,108,108,.18)', 'rgba(245,108,108,0)') },
+                        emphasis: { focus: 'series' } }
+                ]
+            });
+        };
+
+
+        const renderRing = data => {
+            const c = chart('ring', $('chart-ring'));
+            const gm = {};
+            data.forEach(i => gm[i.courseGroup] = (gm[i.courseGroup] || 0) + i.credit);
+            const pd = Object.entries(gm).map(([name, value]) => ({ name, value: +value.toFixed(2) }));
+            const total = pd.reduce((s, d) => s + d.value, 0).toFixed(1);
+            c.setOption({
+                ...ANIM,
+                tooltip: { trigger: 'item', formatter: '{b}：{c}学分 ({d}%)' },
+                legend: { bottom: 6, left: 'center', type: 'scroll', itemWidth: 12, itemHeight: 12, itemGap: 16 },
+                color: [themeCssVar('--primary-color'), themeCssVar('--success-color'), themeCssVar('--warning-color'), themeCssVar('--danger-color'), themeCssVar('--purple-color'), themeCssVar('--course-teal')],
+                graphic: { type: 'text', left: 'center', top: '37%',
+                    style: { text: total + '\n总学分', fill: themeCssVar('--text-primary'), fontSize: 18, fontWeight: 700, lineHeight: 24, textAlign: 'center' } },
+                series: [{ type: 'pie', radius: ['42%', '66%'], center: ['50%', '44%'],
+                    itemStyle: { borderRadius: 6, borderColor: themeCssVar('--card-bg'), borderWidth: 2 },
+                    label: { fontSize: 11, lineHeight: 15, formatter: p => short(p.name, 8) + '\n' + p.value + '学分' },
+                    labelLayout: { hideOverlap: true },
+                    emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,.15)' } },
+                    data: pd }]
+            });
+        };
+
+
+        const renderDiff = data => {
+            const box = $('chart-diff');
+            fit(box, data.length, 48, 'hint-diff');
+            const c = chart('diff', box);
+            $('badge-diff').textContent = data.length + ' 门';
+            c.resize();
+            const diffs = data.map(i => +(i.totalScore - i.finalScore).toFixed(1));
+            c.setOption({
+                ...ANIM,
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+                    formatter: p => {
+                        const d = p[0], it = data[d.dataIndex];
+                        return `${d.name}<br/>期末：${it.finalScore} · 总评：${it.totalScore}<br/>平时贡献：${d.value > 0 ? '+' : ''}${d.value}`;
+                    } },
+                grid: { ...GRID, top: 40, bottom: 10 },
+                xAxis: catAxis(data.map(i => short(i.courseName))),
+                yAxis: { type: 'value', name: '差值（总评-期末）' },
+                series: [{ type: 'bar', data: diffs, barWidth: 16,
+                    itemStyle: { borderRadius: 4,
+                        color: p => p.value >= 0 ? grad(themeCssVar('--success-color'), themeCssVar('--success-color')) : grad(themeCssVar('--danger-color'), themeCssVar('--danger-color')) },
+                    label: { show: true, position: 'top', fontSize: 10,
+                        formatter: p => (p.value > 0 ? '+' : '') + p.value },
+                    markLine: { symbol: 'none',
+                        lineStyle: { type: 'dashed', color: themeCssVar('--warning-color') },
+                        label: { fontSize: 10, color: themeCssVar('--warning-color') },
+                        data: [{ type: 'average', name: '平均' }] } }]
+            });
+        };
+
+
+        const renderRadar = data => {
+            const box = $('chart-radar');
+            const c = chart('radar', box);
+            $('badge-radar').textContent = data.length + ' 门';
+
+            if (data.length <= 16) {
+                $('radarTitle').textContent = '绩点雷达图（各课绩点分布）';
+                $('hint-radar').classList.remove('show');
+                box.style.width = '100%';
+                box.style.height = '460px';
+                c.resize();
+                c.setOption({
+                    ...ANIM,
+                    tooltip: {},
+                    radar: {
+                        indicator: data.map(i => ({ name: short(i.courseName, 8), max: 5 })),
+                        center: ['50%', '54%'], radius: '60%', nameGap: 8,
+                        name: { fontSize: 11, color: themeCssVar('--text-secondary') },
+                        splitArea: { areaStyle: { color: ['rgba(64,158,255,.02)', 'rgba(64,158,255,.06)'] } },
+                        axisLine: { lineStyle: { color: themeCssVar('--border-color') } },
+                        splitLine: { lineStyle: { color: themeCssVar('--border-color-light') } }
+                    },
+                    series: [{ type: 'radar',
+                        data: [{ value: data.map(i => i.gpa), name: '绩点',
+                            areaStyle: { color: 'rgba(64,158,255,.25)' },
+                            lineStyle: { color: themeCssVar('--primary-color'), width: 2 },
+                            itemStyle: { color: themeCssVar('--primary-color') } }] }]
+                }, { notMerge: true });
+            } else {
+                $('radarTitle').textContent = '各课绩点排行（课程较多，自动切换）';
+                const sorted = [...data].sort((a, b) => b.gpa - a.gpa);
+                fit(box, sorted.length, 48, 'hint-radar');
+                box.style.height = '420px';
+                c.resize();
+                c.setOption({
+                    ...ANIM,
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+                        formatter: p => `${escapeHtml(p[0].name)}<br/>绩点：${p[0].value.toFixed(1)}` },
+                    grid: { ...GRID, top: 30, bottom: 10 },
+                    xAxis: catAxis(sorted.map(i => short(i.courseName))),
+                    yAxis: { type: 'value', name: '绩点', min: 0, max: 5 },
+                    series: [{ type: 'bar', data: sorted.map(i => i.gpa), barWidth: 18,
+                        itemStyle: { color: grad(themeCssVar('--primary-color-hover'), themeCssVar('--primary-color')), borderRadius: [4, 4, 0, 0] },
+                        label: { show: true, position: 'top', fontSize: 10, color: themeCssVar('--primary-color'),
+                            formatter: p => p.value.toFixed(1) } }]
+                }, { notMerge: true });
+            }
+        };
+
+        const renderAll = data => {
+            if (!data.length) {
+                Object.values(charts).forEach(c => c.clear());
+                ['bar', 'mix', 'diff', 'radar'].forEach(k => $('badge-' + k).textContent = '0 门');
+                return;
+            }
+            renderBar(data); renderPie(data); renderMix(data);
+            renderRing(data); renderDiff(data); renderRadar(data);
+        };
+
+
+        async function refreshPage() {
+            if (isLoading) return;
+            const params = {
+                courseName: $('searchInput').value.trim(),
+                schoolYear: $('yearSel').value,
+                term: $('termSel').value
+            };
+            setLoadingState(true);
+            try {
+                currentData = await fetchScoreData(params);
+                renderAll(currentData);
+                $('totalNum').textContent = currentData.length;
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+
+        let rt;
+        window.addEventListener('resize', () => {
+            clearTimeout(rt);
+            rt = setTimeout(() => currentData.length && renderAll(currentData), 200);
+        });
+
+
+        $('searchBtn').onclick = refreshPage;
+        $('resetBtn').onclick = async () => {
+            if (isLoading) return;
+            $('searchInput').value = '';
+            $('yearSel').value = '';
+            $('termSel').value = '';
+            await refreshPage();
+        };
+        $('searchInput').addEventListener('keyup', e => { if (e.key === 'Enter') refreshPage(); });
+        $('yearSel').onchange = refreshPage;
+        $('termSel').onchange = refreshPage;
+
+        refreshPage();
+    })();
+</script>

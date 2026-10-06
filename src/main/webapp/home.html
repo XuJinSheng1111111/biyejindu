@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>首页 | 学生智能学业管理系统</title>
+    <link rel="icon" href="static/image/admin2.ico"/>
+    <link rel="stylesheet" href="lib/element-plus/index.css"/>
+    <link rel="stylesheet" href="static/css/site-footer.css"/>
+    <style>
+
+        * {box-sizing: border-box;margin: 0;padding: 0;}
+        html, body, #app {height: 100%;}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: var(--app-font-size, 14px);
+        }
+
+
+        .layout {display: flex;height: 100vh;overflow: hidden;position: relative;}
+        .sidebar {
+            position: fixed;left: 0;top: 0;bottom: 0;width: 220px;z-index: 100;
+            background: var(--sidebar-bg);color: var(--white);transition: width .25s;
+            display: flex;flex-direction: column;
+        }
+        .sidebar.collapsed {width: 64px;}
+        .logo {
+            height: 60px;display: flex;align-items: center;padding: 0 18px;gap: 10px;
+            overflow: hidden;flex-shrink: 0;cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .logo-icon {
+            width: 34px;height: 34px;border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-hover));
+            display: flex;align-items: center;justify-content: center;
+            font-size: 18px;flex-shrink: 0;overflow: hidden;
+        }
+        .logo-icon img {width: 100%;height: 100%;object-fit: cover;}
+        .logo-text {
+            font-size: 16px;font-weight: 700;color: var(--white);letter-spacing: 1px;
+            white-space: nowrap;overflow: hidden;transition: opacity 0.2s, width 0.25s;
+        }
+        .sidebar.collapsed .logo {padding: 0;gap: 0;justify-content: center;}
+        .sidebar.collapsed .logo-text {width: 0;opacity: 0;}
+
+        .sidebar .el-menu {border-right: none;background: transparent;flex: 1;overflow-y: auto;}
+        .sidebar .el-menu::-webkit-scrollbar {width: 4px;}
+        .sidebar .el-menu::-webkit-scrollbar-thumb {background: rgba(255, 255, 255, 0.1);border-radius: 2px;}
+
+        .sidebar .el-menu-item,
+        .sidebar .el-sub-menu__title {
+            color: var(--sidebar-text);
+        }
+
+        .sidebar .el-menu-item:hover,
+        .sidebar .el-sub-menu__title:hover {
+            background: var(--sidebar-hover-bg);
+            color: var(--sidebar-text-active);
+        }
+
+        .sidebar .el-menu-item.is-active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-text-active);
+        }
+
+        .sidebar .el-menu-item.is-active .el-icon {
+            color: var(--sidebar-text-active);
+        }
+
+        .main-wrap {
+            margin-left: 220px;flex: 1;display: flex;flex-direction: column;
+            height: 100vh;transition: margin-left .25s;min-width: 0;
+        }
+        .layout.collapsed .main-wrap {margin-left: 64px;}
+
+        .topbar {
+            height: 60px;background: var(--card-bg);box-shadow: var(--shadow);
+            display: flex;align-items: center;padding: 0 20px;gap: 16px;
+            z-index: 50;flex-shrink: 0;position: sticky;top: 0;
+        }
+        .collapse-btn {cursor: pointer;font-size: 20px;color: var(--text);padding: 6px;border-radius: 4px;}
+        .collapse-btn:hover {background: var(--primary-light);color: var(--primary);}
+        .breadcrumb {flex: 1;color: var(--text-sub);font-size: 14px;}
+        .search-box {width: 240px;}
+        .top-right {display: flex;align-items: center;gap: 18px;}
+
+        .account-info {
+            display: flex;align-items: center;gap: 8px;cursor: pointer;
+            padding: 4px 8px;border-radius: 6px;
+        }
+        .account-info:hover {background: var(--primary-light);}
+        .account-info .avatar {
+            width: 34px;height: 34px;border-radius: 50%;object-fit: cover;display: inline-block;
+            background: var(--hover-bg);border: 2px solid var(--card-bg);box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        .account-info .avatar-empty {background: var(--hover-bg);}
+        .account-info .uname {
+            font-size: var(--app-font-size, 14px);color: var(--text);max-width: 160px;
+            overflow: hidden;text-overflow: ellipsis;white-space: nowrap;
+        }
+
+        .content {flex: 1;overflow-y: auto;background: var(--bg);display: flex;flex-direction: column;}
+        #view-container {flex: 1 0 auto;width: 100%;}
+        .content::-webkit-scrollbar {width: 8px;}
+        .content::-webkit-scrollbar-thumb {background: var(--text-secondary);border-radius: 4px;}
+        [data-theme="dark"] .content::-webkit-scrollbar-thumb {background: var(--border-color);}
+
+
+        [data-theme="dark"] .el-input__wrapper {
+            background-color: var(--card-bg-2) !important;
+            box-shadow: 0 0 0 1px var(--border) inset !important;
+        }
+        [data-theme="dark"] .el-input__inner {color: var(--text) !important;}
+        [data-theme="dark"] .el-input__inner::placeholder,
+        [data-theme="dark"] .el-breadcrumb__inner,
+        [data-theme="dark"] .el-breadcrumb__separator {color: var(--text-sub) !important;}
+        [data-theme="dark"] .el-breadcrumb__inner.is-link:hover {color: var(--primary) !important;}
+        [data-theme="dark"] .el-dropdown-menu {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border) !important;
+        }
+        [data-theme="dark"] .el-dropdown-menu__item {color: var(--text) !important;}
+        [data-theme="dark"] .el-dropdown-menu__item:hover {background: var(--hover-bg) !important;}
+
+
+        .mobile-mask {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrap,
+            .layout.collapsed .main-wrap {
+                margin-left: 0 !important;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .topbar {
+                padding: 0 12px;
+                gap: 10px;
+            }
+
+            .account-info .uname {
+                max-width: 84px;
+            }
+
+            .sidebar {
+                width: 220px !important;
+                z-index: 200;
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                box-shadow: 4px 0 18px rgba(0, 0, 0, .18);
+            }
+
+            .layout:not(.collapsed) .sidebar {
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                width: 220px !important;
+            }
+
+            .sidebar.collapsed .logo {
+                padding: 0 18px;
+                gap: 10px;
+                justify-content: flex-start;
+            }
+
+            .sidebar.collapsed .logo-text {
+                width: auto;
+                opacity: 1;
+            }
+
+            .mobile-mask {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 199;
+                background: rgba(0, 0, 0, .35);
+            }
+        }
+
+
+        .guide-dialog .el-dialog__header {
+            padding: 20px 24px 0;
+        }
+
+        .guide-dialog .el-dialog__body {
+            padding: 14px 24px 0;
+        }
+
+        .guide-dialog .el-dialog__footer {
+            padding: 16px 24px 20px;
+        }
+
+        .guide-hero {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .guide-hero-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 48px;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--primary-color-light);
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+
+        .guide-hero h3 {
+            margin: 0 0 6px;
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .guide-hero p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .guide-upload-tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 20px 0;
+            padding: 16px;
+            border: 1px solid var(--warning-color);
+            border-radius: 10px;
+            background: var(--warning-color-light);
+        }
+
+        .guide-upload-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: var(--warning-color);
+            font-size: 24px;
+        }
+
+        .guide-upload-tip strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .guide-upload-tip p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .guide-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .guide-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 8px;
+            background: var(--hover-bg);
+        }
+
+        .guide-feature-item > .el-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+
+        .guide-feature-item h4 {
+            margin: 0 0 3px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .guide-feature-item p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .guide-steps-wrap {
+            margin: 18px 0 22px;
+        }
+
+        .guide-step-panel {
+            min-height: 250px;
+        }
+
+        .guide-welcome-list {
+            display: grid;
+            gap: 10px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .guide-welcome-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .guide-welcome-list li > span {
+            flex-shrink: 0;
+            color: var(--success-color);
+            font-weight: 700;
+        }
+
+        .guide-action-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 20px;
+            border: 1px solid var(--primary-color);
+            border-radius: 10px;
+            background: var(--primary-color-light);
+        }
+
+        .guide-action-box > .el-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+
+        .guide-action-box h4 {
+            margin: 0 0 5px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .guide-action-box p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .guide-action-list {
+            margin: 16px 0 0 20px;
+            padding: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.9;
+        }
+        @media (max-width: 768px) {
+            .guide-dialog {
+                width: calc(100vw - 24px) !important;
+                max-width: calc(100vw - 24px) !important;
+            }
+
+            .guide-feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        .app-loading {
+            position: fixed;inset: 0;display: flex;align-items: center;justify-content: center;
+            background: var(--bg-color);color: var(--text-secondary);z-index: 9999;
+        }
+
+
+        .weather-pill {
+            display: flex;align-items: center;gap: 10px;padding: 7px 14px 7px 12px;
+            border-radius: 999px;cursor: pointer;color: var(--white);user-select: none;
+            background: linear-gradient(135deg, var(--weather-sky-start) 0%, var(--weather-sky-end) 100%);
+            box-shadow: 0 4px 14px rgba(79, 172, 254, .35);
+            transition: transform .25s ease, box-shadow .25s ease;
+            position: relative;overflow: hidden;
+        }
+
+        .weather-pill::after {
+            content: '';position: absolute;top: 0;left: -75%;width: 50%;height: 100%;
+            background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .35), transparent);
+            transform: skewX(-20deg);transition: left .6s ease;
+        }
+        .weather-pill:hover {transform: translateY(-2px);box-shadow: 0 8px 20px rgba(79, 172, 254, .45);}
+        .weather-pill:hover::after {left: 125%;}
+
+        .weather-pill-icon {font-size: 26px;line-height: 1;animation: wfloat 3s ease-in-out infinite;}
+        @keyframes wfloat {
+            0%, 100% {transform: translateY(0)}
+            50% {transform: translateY(-2px)}
+        }
+        .weather-pill-icon .weather-spin {display: inline-block;animation: wspin 1.2s linear infinite;}
+        @keyframes wspin {to {transform: rotate(360deg);}}
+
+        .weather-pill-info {display: flex;flex-direction: column;line-height: 1.15;}
+        .weather-pill-temp {font-size: 19px;font-weight: 800;letter-spacing: .5px;}
+        .weather-pill-meta {font-size: 11px;opacity: .92;display: flex;gap: 5px;align-items: center;}
+        .weather-pill-city {font-weight: 600;}
+        .weather-pill-text {opacity: .85;}
+        .weather-pill-switch {font-size: 13px;opacity: .8;margin-left: 2px;transition: transform .3s ease;}
+        .weather-pill:hover .weather-pill-switch {transform: rotate(180deg);opacity: 1;}
+
+
+        .weather-pill.theme-sunny {background: linear-gradient(135deg, var(--weather-sunny-start), var(--weather-sunny-end));box-shadow: 0 4px 14px rgba(249, 168, 37, .4);}
+        .weather-pill.theme-cloudy {background: linear-gradient(135deg, var(--weather-sky-start), var(--weather-sky-end));}
+        .weather-pill.theme-overcast {background: linear-gradient(135deg, var(--weather-overcast-start), var(--weather-overcast-end));box-shadow: 0 4px 14px rgba(127, 155, 179, .4);}
+        .weather-pill.theme-rainy {background: linear-gradient(135deg, var(--weather-rain-start), var(--weather-rain-end));box-shadow: 0 4px 14px rgba(58, 123, 213, .4);}
+        .weather-pill.theme-snowy {
+            background: linear-gradient(135deg, var(--weather-snow-start), var(--weather-snow-end));color: var(--text-primary);
+            box-shadow: 0 4px 14px rgba(131, 164, 212, .4);
+        }
+
+
+        .weather-popover.el-popover {
+            padding: 0 !important;border-radius: 14px !important;border: none !important;
+            overflow: hidden;box-shadow: 0 12px 32px rgba(30, 60, 110, .18) !important;
+        }
+        .weather-panel {padding: 16px 16px 14px;}
+        .weather-panel-head {display: flex;justify-content: space-between;align-items: center;margin-bottom: 4px;}
+        .weather-panel-title {font-size: 15px;font-weight: 700;color: var(--text-primary);}
+        .weather-panel-current {
+            font-size: 12px;color: var(--primary-color);font-weight: 600;
+            background: rgba(79, 172, 254, .1);padding: 2px 9px;border-radius: 999px;
+        }
+        .weather-panel-label {
+            font-size: 12px;color: var(--text-secondary);font-weight: 600;margin: 12px 0 8px;
+            display: flex;align-items: center;gap: 6px;
+        }
+        .weather-panel-label::before {
+            content: '';width: 3px;height: 12px;border-radius: 2px;background: var(--primary-color);
+        }
+        .weather-city-grid {display: grid;grid-template-columns: repeat(4, 1fr);gap: 8px;}
+        .weather-city-chip {
+            text-align: center;padding: 7px 0;font-size: 13px;border-radius: 8px;
+            cursor: pointer;background: var(--hover-bg);color: var(--text-secondary);border: 1px solid transparent;
+            transition: all .2s ease;
+        }
+        .weather-city-chip:hover {
+            background: rgba(79, 172, 254, .12);color: var(--primary-color);transform: translateY(-1px);
+        }
+        .weather-city-chip.is-active {
+            background: linear-gradient(135deg, var(--weather-sky-start), var(--weather-sky-end));color: var(--white);
+            font-weight: 700;box-shadow: 0 3px 10px rgba(79, 172, 254, .35);
+        }
+        .weather-custom-row {display: flex;gap: 8px;}
+        .weather-custom-row .el-input {flex: 1;}
+        .weather-panel-tip {
+            margin-top: 12px;padding-top: 10px;border-top: 1px dashed var(--border-color-light);
+            font-size: 11px;color: var(--text-secondary);text-align: right;
+        }
+    </style>
+</head>
+<body>
+<div id="appLoading" class="app-loading">系统加载中...</div>
+<div id="app">
+    <div class="layout" :class="{collapsed:collapsed}">
+
+        <el-aside :class="['sidebar', {collapsed:collapsed}]" width="220px">
+            <div class="logo" @click="activeMenu='scoreAll';loadPage('scoreAll')">
+                <div class="logo-icon">
+                    <img src="static/image/admin2.ico" alt="logo"/>
+                </div>
+                <span class="logo-text">{{ systemName }}</span>
+            </div>
+            <el-menu
+                    :default-active="activeMenu"
+                    :collapse="collapsed"
+                    background-color="transparent"
+                    text-color="var(--sidebar-text)"
+                    active-text-color="var(--sidebar-text-active)"
+                    @select="handleMenuSelect"
+                    :unique-opened="true"
+            >
+                <template v-for="group in menuList" :key="group.key">
+                    <el-sub-menu v-if="group.children && group.children.length" :index="group.key">
+                        <template #title>
+                            <el-icon><component :is="group.icon"/></el-icon>
+                            <span>{{ group.title }}</span>
+                        </template>
+                        <el-menu-item v-for="item in group.children" :key="item.page" :index="item.page">
+                            <el-icon><component :is="item.icon"/></el-icon>
+                            <span>{{ item.title }}</span>
+                        </el-menu-item>
+                    </el-sub-menu>
+                    <el-menu-item v-else :index="group.page">
+                        <el-icon><component :is="group.icon"/></el-icon>
+                        <span>{{ group.title }}</span>
+                    </el-menu-item>
+                </template>
+                <el-menu-item index="__logout__" @click="logout">
+                    <el-icon><component :is="IconSwitchButton"/></el-icon>
+                    <span>退出登录</span>
+                </el-menu-item>
+            </el-menu>
+        </el-aside>
+
+        <div v-if="!collapsed" class="mobile-mask" @click="collapsed = true"></div>
+
+
+        <div class="main-wrap">
+            <div class="topbar">
+                <el-icon class="collapse-btn" @click="toggleSidebar">
+                    <component :is="collapsed ? IconExpand : IconFold"/>
+                </el-icon>
+                <div class="breadcrumb">
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item>首页</el-breadcrumb-item>
+                        <el-breadcrumb-item>{{ currentBreadcrumb }}</el-breadcrumb-item>
+                    </el-breadcrumb>
+                </div>
+                <el-input class="search-box" v-model="searchKey" placeholder="搜索功能/菜单..."
+                          :prefix-icon="IconSearch" @keyup.enter="doSearch"></el-input>
+                <div class="top-right">
+
+                    <el-popover
+                            placement="bottom-end"
+                            :width="340"
+                            trigger="click"
+                            popper-class="weather-popover"
+                            :show-arrow="false"
+                            :offset="10"
+                            v-model:visible="weatherPopoverVisible"
+                    >
+                        <template #reference>
+                            <div class="weather-pill" :class="[weatherThemeClass()]" title="点击切换城市">
+                                <div class="weather-pill-icon">
+                                    <span v-if="weather.loading" class="weather-spin">⏳</span>
+                                    <span v-else-if="weather.data">{{ getWeatherEmoji(weather.data.weatherCode)}}</span>
+                                    <span v-else>🌐</span>
+                                </div>
+                                <div class="weather-pill-info">
+                                    <div class="weather-pill-temp">
+                                        <template v-if="weather.data">{{ weather.data.temp }}°C</template>
+                                        <template v-else>--</template>
+                                    </div>
+                                    <div class="weather-pill-meta">
+                                        <span class="weather-pill-city">{{ weather.data ? weather.data.city : '加载中'}}</span>
+                                        <span v-if="weather.data" class="weather-pill-text">{{ weather.data.weatherText}}</span>
+                                    </div>
+                                </div>
+                                <div class="weather-pill-switch">⇄</div>
+                            </div>
+                        </template>
+
+                        <div class="weather-panel">
+                            <div class="weather-panel-head">
+                                <span class="weather-panel-title">🌤 切换城市</span>
+                                <span class="weather-panel-current" v-if="weather.data">当前：{{ weather.data.city}}</span>
+                            </div>
+                            <div class="weather-panel-label">常用城市</div>
+                            <div class="weather-city-grid">
+                                <span
+                                        v-for="c in hotCities"
+                                        :key="c"
+                                        class="weather-city-chip"
+                                        :class="{'is-active': isCityActive(c)}"
+                                        @click="switchCity(c)"
+                                >{{ c }}</span>
+                            </div>
+                            <div class="weather-panel-label">或输入城市</div>
+                            <div class="weather-custom-row">
+                                <el-input
+                                        v-model="customCity"
+                                        placeholder="如：乐昌、始兴、翁源"
+                                        clearable
+                                        @keyup.enter="switchCity(customCity)"></el-input>
+                                <el-button type="primary" @click="switchCity(customCity)">查询</el-button>
+                            </div>
+                            <div class="weather-panel-tip" v-if="weather.data">
+                                数据更新于 {{ formatUpdateTime(weather.data.updateTime) }}
+                            </div>
+                        </div>
+                    </el-popover>
+
+                    <el-dropdown trigger="click" @command="handleUserMenu">
+                        <span class="account-info">
+                            <img v-if="avatarUrl" class="avatar" :src="avatarUrl" @error="onAvatarError" alt="头像"/>
+                            <span v-else class="avatar avatar-empty" aria-hidden="true"></span>
+                            <span v-if="userName" class="uname" :title="userName">{{ userName }}</span>
+                            <el-icon><component :is="IconArrowDown"/></el-icon>
+                        </span>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item command="info">
+                                    <el-icon><component :is="IconUser"/></el-icon>
+                                    个人中心
+                                </el-dropdown-item>
+                                <el-dropdown-item divided command="__logout__">
+                                    <el-icon><component :is="IconSwitchButton"/></el-icon>
+                                    退出登录
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </div>
+            </div>
+            <div class="content">
+                <div id="view-container"></div>
+<footer v-if="activeMenu === 'setting' || activeMenu === 'feedback' || activeMenu === 'uploadScore' || activeMenu === 'competition' || activeMenu === 'plan'" class="site-footer">
+    <div class="footer-copy">学生智能学业管理系统 SIAMS V1.0</div>
+</footer>
+            </div>
+        </div>
+    </div>
+        <guide-dialog v-model="guideVisible" :completing="guideSaving"
+                      @complete="handleGuideComplete" @later="handleGuideLater"></guide-dialog>
+</div>
+
+<script src="lib/vue3/vue.global.prod.js"></script>
+<script src="lib/axios/axios.min.js"></script>
+<script src="lib/element-plus/index.full.js"></script>
+<script src="lib/icons-vue.js"></script>
+<script src="lib/echarts.min.js"></script>
+<script>
+    (() => {
+        const {createApp, reactive, ref, computed, watch, onMounted, onBeforeUnmount, nextTick, markRaw} = Vue;
+        const {ElMessage, ElMessageBox} = ElementPlus;
+        const CTX = '/student_system';
+
+        window.themeCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+
+        const LS_KEYS = {
+            avatar: 'sams_avatar',
+            cover: 'sams_cover',
+            theme: 'sams_theme',
+            settings: 'sys_setting',
+            logo: 'sams_logo',
+            systemName: 'sams_sysname',
+            userCache: 'sams_userinfo'
+        };
+
+
+        const API = {
+            page: (pageName) => CTX + '/page/' + pageName + '.html',
+            getUserInfo: CTX + '/api/student/userInfo',
+            logout: CTX + '/api/account/logout',
+            weather: CTX + '/api/other/weather',
+            getSettings: CTX + '/api/settings/get',
+            saveSettings: CTX + '/api/settings/save',
+            completeGuide: CTX + '/api/settings/completeGuide'
+        };
+
+        const IconLib = window.ElementPlusIconsVue || window.ElementPlusIcons || {};
+        window.__pageCharts = window.__pageCharts || {};
+
+
+
+        const resolveAssetUrl = url => {
+            if (!url) return '';
+            const value = String(url).trim();
+            if (/^(?:https?:|data:|blob:)/i.test(value)) return value;
+            const normalized = value.replace(/^\/+/, '');
+            const contextName = CTX.replace(/^\/+/, '');
+            if (normalized === contextName || normalized.startsWith(contextName + '/')) {
+                return '/' + normalized;
+            }
+            return CTX + '/' + normalized;
+        };
+
+        const GuideDialog = {
+            name: 'GuideDialog',
+            props: {
+                modelValue: {type: Boolean, default: false},
+                completing: {type: Boolean, default: false}
+            },
+            emits: ['update:modelValue', 'complete', 'later'],
+            setup(props, {emit}) {
+                const step = ref(0);
+
+                watch(() => props.modelValue, value => {
+                    if (value) step.value = 0;
+                });
+
+                const updateVisible = value => emit('update:modelValue', value);
+                const goNext = () => {
+                    if (step.value < 2) step.value += 1;
+                };
+                const goPrev = () => {
+                    if (step.value > 0) step.value -= 1;
+                };
+                const later = () => emit('later');
+                const complete = () => emit('complete');
+
+                return {step, updateVisible, goNext, goPrev, later, complete};
+            },
+            template: `
+                <el-dialog
+                        :model-value="modelValue"
+                        @update:model-value="updateVisible"
+                        class="guide-dialog"
+                        width="760px"
+                        :close-on-click-modal="false"
+                        append-to-body>
+                    <div class="guide-steps-wrap">
+                        <el-steps :active="step" align-center finish-status="success">
+                            <el-step title="欢迎"></el-step>
+                            <el-step title="核心功能"></el-step>
+                            <el-step title="开始使用"></el-step>
+                        </el-steps>
+                    </div>
+
+                    <div v-if="step === 0" class="guide-step-panel">
+                        <div class="guide-hero">
+                            <div class="guide-hero-icon"><Guide></Guide></div>
+                            <div>
+                                <h3>欢迎使用学生智能学业管理系统</h3>
+                                <p>这是一个围绕成绩、学业分析和学习规划打造的智能学业管理工具。</p>
+                            </div>
+                        </div>
+                        <ul class="guide-welcome-list">
+                            <li><span>✓</span>上传成绩单后，自动建立你的学业数据档案。</li>
+                            <li><span>✓</span>结合成绩生成可视化图表和学业分析结果。</li>
+                            <li><span>✓</span>根据学业数据辅助竞赛推荐和计划管理。</li>
+                        </ul>
+                    </div>
+
+                    <div v-else-if="step === 1" class="guide-step-panel">
+                        <div class="guide-upload-tip">
+                            <el-icon class="guide-upload-icon"><UploadFilled></UploadFilled></el-icon>
+                            <div>
+                                <strong>最关键的一步：先上传成绩单</strong>
+                                <p>只有上传成绩单后，系统才能生成成绩可视化、学业分析和竞赛智能推荐等核心结果。</p>
+                            </div>
+                        </div>
+                        <div class="guide-feature-grid">
+                            <div class="guide-feature-item">
+                                <el-icon><TrendCharts></TrendCharts></el-icon>
+                                <div>
+                                    <h4>成绩可视化</h4>
+                                    <p>生成综合成绩、成绩趋势和统计图表。</p>
+                                </div>
+                            </div>
+                            <div class="guide-feature-item">
+                                <el-icon><DataAnalysis></DataAnalysis></el-icon>
+                                <div>
+                                    <h4>学业智能分析</h4>
+                                    <p>识别成绩变化、薄弱课程和提升方向。</p>
+                                </div>
+                            </div>
+                            <div class="guide-feature-item">
+                                <el-icon><Trophy></Trophy></el-icon>
+                                <div>
+                                    <h4>竞赛智能推荐</h4>
+                                    <p>结合学业表现提供更匹配的竞赛参考。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="guide-step-panel">
+                        <div class="guide-action-box">
+                            <el-icon><UploadFilled></UploadFilled></el-icon>
+                            <div>
+                                <h4>现在上传你的第一份成绩单</h4>
+                                <p>上传后即可解锁成绩可视化、学业分析和竞赛智能推荐。</p>
+                            </div>
+                        </div>
+                        <ul class="guide-action-list">
+                            <li>支持 Excel 成绩单导入。</li>
+                            <li>上传后可在「学业中心」查看完整分析结果。</li>
+                            <li>后续可随时在系统设置中重新播放本引导。</li>
+                        </ul>
+                    </div>
+
+                    <template #footer>
+                        <el-button v-if="step > 0" @click="goPrev">上一步</el-button>
+                        <el-button v-if="step < 2" type="primary" @click="goNext">下一步</el-button>
+                        <el-button v-else @click="later">稍后再说</el-button>
+                        <el-button v-if="step === 2" type="success" :loading="completing" @click="complete">
+                            立即上传成绩单
+                        </el-button>
+                    </template>
+                </el-dialog>
+            `
+        };
+        const app = createApp({
+            setup() {
+
+                const IconSearch = markRaw(IconLib.Search);
+                const IconFold = markRaw(IconLib.Fold);
+                const IconExpand = markRaw(IconLib.Expand);
+                const IconArrowDown = markRaw(IconLib.ArrowDown);
+                const IconUser = markRaw(IconLib.User);
+                const IconEdit = markRaw(IconLib.Edit);
+                const IconSwitchButton = markRaw(IconLib.SwitchButton);
+                const IconUpload = markRaw(IconLib.Upload);
+                const IconDocument = markRaw(IconLib.Document);
+                const IconTrendCharts = markRaw(IconLib.TrendCharts);
+                const IconHomeFilled = markRaw(IconLib.HomeFilled);
+                const IconReading = markRaw(IconLib.Reading);
+                const IconDataBoard = markRaw(IconLib.DataBoard);
+
+
+                const collapsed = ref(window.innerWidth < 768);
+                const activeMenu = ref('scoreAll');
+                const searchKey = ref('');
+                const userName = ref('');
+                const userInfo = reactive({
+                    id: null, stuId: '', nickname: '', name: '', avatar: '', avatarUrl: '', coverUrl: '',
+                    phone: '', major: '', className: '', email: '', signature: ''
+                });
+                const currentPageTitle = ref('综合概览');
+                const systemName = ref('智能学业管理系统');
+                const avatarUrl = ref(localStorage.getItem(LS_KEYS.avatar) || '');
+                const coverBg = ref(resolveAssetUrl(localStorage.getItem(LS_KEYS.cover)) || '');
+                const guideVisible = ref(false);
+                const guideSaving = ref(false);
+
+
+                window.__avatarUrl = avatarUrl;
+                window.__coverBg = coverBg;
+
+
+                const menuList = reactive([
+                    {
+                        key: 'g1', title: '个人中心', icon: IconUser,
+                        children: [
+                            {page: 'info', title: '个人主页', icon: markRaw(IconLib.UserFilled)}
+                        ]
+                    },
+                    {
+                        key: 'g2', title: '学业中心', icon: IconTrendCharts,
+                        children: [
+                            {page: 'scoreAll', title: '综合成绩', icon: IconHomeFilled},
+                            {page: 'score', title: '成绩明细', icon: IconDocument},
+                            {page: 'scoreChart', title: '成绩统计图表', icon: IconDataBoard},
+                            {page: 'academicAnalysis', title: '学业智能分析', icon: markRaw(IconLib.DataAnalysis)},
+                            {page: 'uploadScore', title: '上传成绩单', icon: IconUpload}
+                        ]
+                    },
+                    {key: 'plan', page: 'plan', title: '学习计划', icon: IconReading},
+                    {key: 'competition', page: 'competition', title: '竞赛信息', icon: markRaw(IconLib.Trophy)},
+                    {
+                        key: 'sys', title: '系统设置', icon: markRaw(IconLib.Setting),
+                        children: [
+                            {page: 'setting', title: '基础设置', icon: markRaw(IconLib.Setting)},
+                            {page: 'feedback', title: '意见反馈', icon: markRaw(IconLib.Edit)}
+                        ]
+                    }
+                ]);
+
+
+                const avatarDisplay = computed(() => {
+                    const source = avatarUrl.value || userInfo.avatarUrl || userInfo.avatar;
+                    return source ? resolveAssetUrl(source) : '';
+                });
+                const currentBreadcrumb = computed(() => currentPageTitle.value);
+
+
+                function setUserInfo(data) {
+                    if (!data) return;
+                    Object.assign(userInfo, data);
+                    userName.value = data.nickname || data.realName || '';
+                    window.__userInfo = userInfo;
+                    localStorage.setItem(LS_KEYS.userCache, JSON.stringify(data));
+
+                    const avatarSource = data.avatarUrl || data.avatar;
+                    if (avatarSource) {
+                        const resolvedAvatar = resolveAssetUrl(avatarSource);
+                        avatarUrl.value = resolvedAvatar;
+                        userInfo.avatar = resolvedAvatar;
+                        localStorage.setItem(LS_KEYS.avatar, resolvedAvatar);
+                    } else {
+                        avatarUrl.value = '';
+                        userInfo.avatar = '';
+                        userInfo.avatarUrl = '';
+                        localStorage.removeItem(LS_KEYS.avatar);
+                    }
+                    if (data.coverUrl) {
+                        const resolvedCover = resolveAssetUrl(data.coverUrl);
+                        coverBg.value = resolvedCover;
+                        window.__coverBg = coverBg;
+                        localStorage.setItem(LS_KEYS.cover, resolvedCover);
+                    } else {
+                        coverBg.value = '';
+                        localStorage.removeItem(LS_KEYS.cover);
+                    }
+                }
+
+
+                const weather = reactive({loading: false, data: null});
+                const hotCities = ['韶关', '乐昌', '始兴', '仁化', '翁源', '广州', '深圳', '珠海', '佛山', '东莞', '呼和浩特'];
+                const customCity = ref('');
+                const weatherPopoverVisible = ref(false);
+
+                function getWeatherEmoji(code) {
+                    const c = parseInt(code, 10);
+                    if (c === 100) return '☀️';
+                    if (c >= 101 && c <= 103) return '⛅';
+                    if (c === 104) return '☁️';
+                    if (c >= 300 && c < 400) return '🌧️';
+                    if (c >= 400 && c < 500) return '🌨️';
+                    if (c === 499) return '❄️';
+                    if (c >= 500 && c < 600) return '🌫️';
+                    if (c >= 200 && c < 300) return '💨';
+                    return '🌤️';
+                }
+
+                function weatherThemeClass() {
+                    if (!weather.data) return 'theme-default';
+                    const code = parseInt(weather.data.weatherCode, 10);
+                    if (code === 100) return 'theme-sunny';
+                    if (code >= 101 && code <= 103) return 'theme-cloudy';
+                    if (code === 104) return 'theme-overcast';
+                    if (code >= 300 && code < 400) return 'theme-rainy';
+                    if (code >= 400 && code < 500) return 'theme-snowy';
+                    return 'theme-default';
+                }
+
+                function loadWeather() {
+                    weather.loading = true;
+                    const city = localStorage.getItem('sams_weather_city') || '韶关';
+                    fetchWeather(city);
+                }
+
+                async function fetchWeather(cityName) {
+                    try {
+                        const url = API.weather + '?cityName=' + encodeURIComponent(cityName);
+                        const res = await axios.get(url);
+                        if (res.data?.code === 200 && res.data.data) {
+                            weather.data = res.data.data;
+                        }
+                    } catch (err) {
+                        ElMessage.error("[天气] 请求失败");
+                    } finally {
+                        weather.loading = false;
+                    }
+                }
+
+                function isCityActive(c) {
+                    if (!weather.data?.city) return false;
+                    const city = String(weather.data.city);
+                    return city === c || city.includes(c) || c.includes(city);
+                }
+
+                function switchCity(c) {
+                    const city = (c || '').trim();
+                    if (!city) return ElMessage.warning('请先输入城市名');
+                    localStorage.setItem('sams_weather_city', city);
+                    customCity.value = '';
+                    weatherPopoverVisible.value = false;
+                    fetchWeather(city);
+                }
+
+                function formatUpdateTime(t) {
+                    if (!t) return '';
+                    const m = String(t).match(/T(\d{2}:\d{2})/);
+                    return m ? m[1] : t;
+                }
+
+
+                function openGuide() {
+                    guideVisible.value = true;
+                }
+
+                function handleOpenGuideEvent() {
+                    openGuide();
+                }
+
+                function handleGuideLater() {
+                    guideVisible.value = false;
+                }
+
+                async function handleGuideComplete() {
+                    guideSaving.value = true;
+                    try {
+                        const response = await axios.post(API.completeGuide, {});
+                        const result = response.data;
+                        if (result?.code !== 200) {
+                            throw new Error(result?.msg || '新手指引状态保存失败');
+                        }
+                        guideVisible.value = false;
+                        activeMenu.value = 'uploadScore';
+                        loadPage('uploadScore');
+                    } catch (error) {
+                        ElMessage.error(error.response?.data?.msg || error.message || '新手指引状态保存失败');
+                    } finally {
+                        guideSaving.value = false;
+                    }
+                }
+
+
+                function disposeCharts() {
+                    const charts = window.__pageCharts || {};
+                    Object.keys(charts).forEach(k => {
+                        try { charts[k]?.dispose?.(); } catch (e) {}
+                    });
+                    window.__pageCharts = {};
+                }
+
+                function findTitle(pageName) {
+                    for (const g of menuList) {
+                        if (g.page === pageName) return g.title;
+                        if (g.children) for (const it of g.children) if (it.page === pageName) return it.title;
+                    }
+                    return pageName;
+                }
+
+                function isKnownPage(pageName) {
+                    return typeof pageName === 'string' && menuList.some(group =>
+                        group.page === pageName || group.children?.some(item => item.page === pageName));
+                }
+
+                async function loadPage(pageName) {
+                    disposeCharts();
+                    const container = document.getElementById('view-container');
+                    if (!container) return;
+                    if (!isKnownPage(pageName)) {
+                        const error = document.createElement('div');
+                        error.style.cssText = 'padding:80px;text-align:center;color:var(--danger-color)';
+                        error.textContent = '页面地址不合法';
+                        container.replaceChildren(error);
+                        return;
+                    }
+                    container.innerHTML = '<div style="text-align:center;padding:80px;color:var(--text-sub);"><i class="el-icon-loading"></i> 页面加载中...</div>';
+
+                    try {
+                        const res = await axios.get(API.page(pageName), {params: {_t: Date.now()}});
+                        container.innerHTML = res.data;
+
+
+                        const scripts = container.querySelectorAll('script');
+                        const scriptList = [];
+                        scripts.forEach(s => {
+                            scriptList.push({src: s.getAttribute('src'), code: s.textContent || ''});
+                            s.parentNode?.removeChild(s);
+                        });
+
+                        currentPageTitle.value = findTitle(pageName);
+
+                        for (const s of scriptList) {
+                            if (s.src) {
+                                await new Promise(resolve => {
+                                    const ns = document.createElement('script');
+                                    ns.src = s.src;
+                                    ns.onload = resolve;
+                                    ns.onerror = resolve;
+                                    document.body.appendChild(ns);
+                                });
+                            } else if (s.code.trim()) {
+                                const ns = document.createElement('script');
+                                ns.textContent = s.code;
+                                document.body.appendChild(ns);
+                                document.body.removeChild(ns);
+                            }
+                        }
+
+                        await nextTick();
+                        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+                    } catch (err) {
+                        console.error('loadPage error', err);
+                        const error = document.createElement('div');
+                        error.style.cssText = 'padding:80px;text-align:center;color:var(--danger-color)';
+                        const detail = document.createElement('small');
+                        error.append(document.createTextNode(`页面加载失败：${findTitle(pageName)}`), document.createElement('br'), detail);
+                        detail.textContent = err.message || '';
+                        container.replaceChildren(error);
+                    }
+                }
+
+
+                function handleMenuSelect(index) {
+                    if (index === '__logout__') return logout();
+                    activeMenu.value = index;
+                    if (window.innerWidth < 768) collapsed.value = true;
+                    loadPage(index);
+                }
+
+                function handleUserMenu(cmd) {
+                    if (cmd === '__logout__') return logout();
+                    activeMenu.value = cmd;
+                    if (window.innerWidth < 768) collapsed.value = true;
+                    loadPage(cmd);
+                }
+
+                function doSearch() {
+                    const kw = (searchKey.value || '').trim();
+                    if (!kw) return ElMessage.info('请输入搜索关键词');
+
+                    for (const g of menuList) {
+                        if (g.title?.includes(kw)) {
+                            if (g.page) {
+                                activeMenu.value = g.page;
+                                loadPage(g.page);
+                                return;
+                            }
+                            if (g.children?.length) {
+                                const first = g.children[0];
+                                activeMenu.value = first.page;
+                                loadPage(first.page);
+                                return;
+                            }
+                        }
+                        if (g.children) for (const it of g.children) {
+                            if (it.title.includes(kw)) {
+                                activeMenu.value = it.page;
+                                loadPage(it.page);
+                                return;
+                            }
+                        }
+                    }
+                    ElMessage.warning('未找到匹配的菜单：' + kw);
+                }
+
+
+                async function getUserInfo() {
+
+                    try {
+                        const topInfo = window.top?.__userInfo;
+                        if (topInfo?.realName || topInfo?.stuId) setUserInfo(topInfo);
+                    } catch (e) {}
+
+
+                    const maxRetries = 2;
+                    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                        try {
+                            const res = await axios.post(API.getUserInfo, {});
+                            if (res.data?.code === 401) {
+                                ElMessage.error('登录已失效，请重新登录');
+                                setTimeout(() => { window.top.location.href = CTX + '/login.html'; }, 800);
+                                return { code: 401 };
+                            }
+                            if (res.data?.code === 200 && res.data.data) {
+                                setUserInfo(res.data.data);
+                                return { code: 200 };
+                            }
+                        } catch (e) {
+                            if (attempt < maxRetries) await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    }
+                    return { code: 500 };
+                }
+
+
+                function logout() {
+                    ElMessageBox.confirm('确定退出登录吗？', '提示', {
+                        confirmButtonText: '确定退出',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(async () => {
+                        try { await axios.post(API.logout, {}); } catch (e) {}
+                        sessionStorage.removeItem('loginFlag');
+                        localStorage.removeItem('loginFlag');
+                        localStorage.removeItem('token');
+                        localStorage.removeItem(LS_KEYS.userCache);
+                        localStorage.removeItem(LS_KEYS.avatar);
+                        localStorage.removeItem(LS_KEYS.cover);
+                        localStorage.removeItem('sams_scorestats');
+                        window.__userInfo = null;
+                        window.__scoreStats = null;
+                        userName.value = '';
+                        avatarUrl.value = '';
+                        coverBg.value = '';
+                        ElMessage.success('已退出登录');
+                        setTimeout(() => { location.href = CTX + '/login.html'; }, 500);
+                    }).catch(() => {});
+                }
+
+
+                function onAvatarError(e) {
+                    e.target.style.display = 'none';
+                    avatarUrl.value = '';
+                    userInfo.avatar = '';
+                    userInfo.avatarUrl = '';
+                    localStorage.removeItem(LS_KEYS.avatar);
+                }
+                function handleAvatarUpdated(e) {
+                    if (e.detail?.avatar) {
+                        avatarUrl.value = resolveAssetUrl(e.detail.avatar);
+                        userInfo.avatar = avatarUrl.value;
+                        userInfo.avatarUrl = avatarUrl.value;
+                        localStorage.setItem(LS_KEYS.avatar, avatarUrl.value);
+                    }
+                }
+                function handleUserInfoUpdated(e) {
+                    if (e.detail) {
+                        const avatarSource = e.detail.avatar || e.detail.avatarUrl;
+                        if (avatarSource) {
+                            avatarUrl.value = resolveAssetUrl(avatarSource);
+                            userInfo.avatar = avatarUrl.value;
+                            localStorage.setItem(LS_KEYS.avatar, avatarUrl.value);
+                        }
+                        userName.value = e.detail.nickname || e.detail.realName || '';
+                        Object.assign(userInfo, e.detail);
+                        localStorage.setItem(LS_KEYS.userCache, JSON.stringify(e.detail));
+                    }
+                }
+
+                function readLocalSettings() {
+                    try {
+                        return JSON.parse(localStorage.getItem(LS_KEYS.settings) || '{}');
+                    } catch (e) {
+                        return {};
+                    }
+                }
+
+                function normalizeSettings(value) {
+                    const raw = value && typeof value === 'object' ? value : {};
+                    return {
+                        theme: ['light', 'dark', 'auto'].includes(raw.theme) ? raw.theme : 'light',
+                        themeColor: ['blue', 'green', 'orange', 'red', 'purple'].includes(raw.themeColor)
+                            ? raw.themeColor : 'blue',
+                        fontSize: ['normal', 'large', 'xlarge'].includes(raw.fontSize)
+                            ? raw.fontSize : 'normal',
+                        sidebarCollapsed: raw.sidebarCollapsed === true
+                    };
+                }
+
+                function persistSettings(settings) {
+                    localStorage.setItem(LS_KEYS.settings, JSON.stringify(settings));
+                    localStorage.setItem(LS_KEYS.theme, settings.theme);
+                }
+
+                function getCurrentSettings() {
+                    const saved = readLocalSettings();
+                    return normalizeSettings({
+                        ...saved,
+                        theme: localStorage.getItem(LS_KEYS.theme) || saved.theme
+                    });
+                }
+
+                function applySettings(settings) {
+                    const next = normalizeSettings(settings);
+                    persistSettings(next);
+                    applyTheme(next.theme);
+                    applyThemeColor(next.themeColor);
+                    applyFontSize(next.fontSize);
+                    if (window.innerWidth >= 768) {
+                        collapsed.value = next.sidebarCollapsed;
+                    }
+                    return next;
+                }
+
+                function saveSidebarPreference() {
+                    const next = {
+                        ...getCurrentSettings(),
+                        sidebarCollapsed: Boolean(collapsed.value)
+                    };
+                    persistSettings(next);
+                    axios.post(API.saveSettings, next).catch(() => {});
+                }
+
+                function toggleSidebar() {
+                    collapsed.value = !collapsed.value;
+                    if (window.innerWidth >= 768) {
+                        saveSidebarPreference();
+                    }
+                }
+
+                async function loadServerSettings() {
+                    try {
+                        const res = await axios.get(API.getSettings, {timeout: 3000});
+                        if (res.data?.code === 200 && res.data.data) {
+                            applySettings(res.data.data);
+                            const guideCompleted = res.data.data.guideCompleted === true
+                                || Number(res.data.data.guideCompleted) === 1;
+                            if (!guideCompleted) {
+                                setTimeout(() => {
+                                    guideVisible.value = true;
+                                }, 300);
+                            }
+                        }
+                    } catch (e) {
+
+                    }
+                }
+
+                function handleThemeUpdate(e) {
+                    const detail = e.detail || {};
+                    const saved = readLocalSettings();
+                    applySettings({...saved, ...detail});
+                }
+
+                function handleNavigatePage(e) {
+                    const page = e.detail?.page;
+                    if (!page) return;
+                    activeMenu.value = page;
+                    loadPage(page);
+                }
+
+                const mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+                function applyTheme(theme) {
+                    theme = theme || localStorage.getItem(LS_KEYS.theme) || 'light';
+                    if (theme === 'green') theme = 'light';
+                    localStorage.setItem(LS_KEYS.theme, theme);
+                    const root = document.documentElement;
+                    root.removeAttribute('data-theme');
+                    if (theme === 'dark') {
+                        root.setAttribute('data-theme', 'dark');
+                    } else if (theme === 'auto' && mql?.matches) {
+                        root.setAttribute('data-theme', 'dark');
+                    }
+                    setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+                }
+
+                function applyThemeColor(color) {
+                    const colors = {
+                        blue: ['#409EFF', '#66b1ff', '#ecf5ff', '#1f2d3d'],
+                        green: ['#67C23A', '#85ce61', '#f0f9eb', '#1e3524'],
+                        orange: ['#E6A23C', '#ebb563', '#fdf6ec', '#3a2f1f'],
+                        red: ['#F56C6C', '#f78989', '#fef0f0', '#3a2024'],
+                        purple: ['#9b59b6', '#b37bcb', '#f5eef8', '#2f2338']
+                    };
+                    const pair = colors[color] || colors.blue;
+                    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    document.documentElement.style.setProperty('--primary-color', pair[0]);
+                    document.documentElement.style.setProperty('--el-color-primary', pair[0]);
+                    document.documentElement.style.setProperty('--el-color-primary-light-3', pair[1]);
+                    document.documentElement.style.setProperty('--primary-color-hover', pair[1]);
+                    document.documentElement.style.setProperty('--primary-color-light', dark ? pair[3] : pair[2]);
+                }
+
+                function applyFontSize(size) {
+                    const sizes = {normal: '14px', large: '15px', xlarge: '17px'};
+                    document.documentElement.style.setProperty('--app-font-size', sizes[size] || sizes.normal);
+                }
+
+                function applySavedSettings() {
+                    const saved = readLocalSettings();
+                    applySettings({
+                        ...saved,
+                        theme: saved.theme || localStorage.getItem(LS_KEYS.theme) || 'light'
+                    });
+                }
+
+                function onSystemThemeChange() {
+                    if (localStorage.getItem(LS_KEYS.theme) === 'auto') applyTheme('auto');
+                }
+
+                let resizeTimer = null;
+                let wasMobile = window.innerWidth < 768;
+                function onResize() {
+                    const mobile = window.innerWidth < 768;
+                    if (mobile) {
+                        collapsed.value = true;
+                    } else if (wasMobile) {
+                        collapsed.value = Boolean(readLocalSettings().sidebarCollapsed);
+                    }
+                    wasMobile = mobile;
+                    if (resizeTimer) clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        Object.keys(window.__pageCharts || {}).forEach(k => {
+                            try { window.__pageCharts[k]?.resize?.(); } catch (e) {}
+                        });
+                    }, 120);
+                }
+
+
+                onMounted(async () => {
+                    applySavedSettings();
+
+                    if (mql) mql.addEventListener ? mql.addEventListener('change', onSystemThemeChange) : mql.addListener(onSystemThemeChange);
+
+
+                    try {
+                        const cached = localStorage.getItem(LS_KEYS.userCache);
+                        if (cached) setUserInfo(JSON.parse(cached));
+                    } catch (e) {}
+
+
+                    const loading = document.getElementById('appLoading');
+                    if (loading) loading.remove();
+
+
+                    getUserInfo();
+                    loadPage('scoreAll');
+                    loadWeather();
+                    loadServerSettings();
+
+
+                    window.addEventListener('avatarUpdated', handleAvatarUpdated);
+                    window.addEventListener('openGuide', handleOpenGuideEvent);
+                    window.addEventListener('userInfoUpdated', handleUserInfoUpdated);
+                    window.addEventListener('themeUpdated', handleThemeUpdate);
+                    window.addEventListener('navigatePage', handleNavigatePage);
+                    window.addEventListener('resize', onResize);
+                });
+
+                onBeforeUnmount(() => {
+                    disposeCharts();
+                    window.removeEventListener('avatarUpdated', handleAvatarUpdated);
+                    window.removeEventListener('openGuide', handleOpenGuideEvent);
+                    window.removeEventListener('navigatePage', handleNavigatePage);
+                    window.removeEventListener('resize', onResize);
+                    window.removeEventListener('userInfoUpdated', handleUserInfoUpdated);
+                    window.removeEventListener('themeUpdated', handleThemeUpdate);
+                    if (mql) mql.removeEventListener ? mql.removeEventListener('change', onSystemThemeChange) : mql.removeListener(onSystemThemeChange);
+                });
+
+                return {
+                    collapsed, activeMenu, searchKey, userName,
+                    avatarUrl: avatarDisplay, systemName, menuList, currentBreadcrumb,
+                    weather, getWeatherEmoji, hotCities, customCity, weatherPopoverVisible,
+                    weatherThemeClass, isCityActive, switchCity, formatUpdateTime,
+                    guideVisible, guideSaving, openGuide, handleGuideComplete, handleGuideLater,
+                    IconSearch, IconFold, IconExpand, IconArrowDown,
+                    IconUser, IconEdit, IconSwitchButton,
+                    handleMenuSelect, handleUserMenu, loadPage, doSearch,
+                    toggleSidebar, logout, onAvatarError
+                };
+            }
+        });
+
+
+        app.use(ElementPlus);
+        for (const [k, c] of Object.entries(IconLib)) app.component(k, c);
+        app.component('GuideDialog', GuideDialog);
+
+
+        axios.interceptors.response.use(resp => resp, err => {
+            if (err.response?.status === 401) {
+                ElMessage.error('登录已失效，请重新登录');
+                setTimeout(() => { location.href = CTX + '/login.html'; }, 800);
+            }
+            return Promise.reject(err);
+        });
+
+        app.config.errorHandler = (err, vm, info) => {
+            console.error('Vue 渲染错误:', err, info);
+        };
+
+        app.mount('#app');
+    })();
+</script>
+</body>
+</html>

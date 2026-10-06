@@ -1,0 +1,664 @@
+<style>
+    .page-wrap {
+        padding: 24px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-wrap * {
+        box-sizing: border-box;
+    }
+
+    .stat-card .label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .stat-card .sub {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+
+    .stat-card .icon-bg {
+        position: absolute;
+        right: -8px;
+        bottom: -8px;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        opacity: .15;
+    }
+
+    .stat-card.blue .value {
+        color: var(--primary-color);
+    }
+
+    .stat-card.blue .icon-bg {
+        background: var(--primary-color);
+    }
+
+    .stat-card.green .value {
+        color: var(--success-color);
+    }
+
+    .stat-card.green .icon-bg {
+        background: var(--success-color);
+    }
+
+    .stat-card.orange .value {
+        color: var(--warning-color);
+    }
+
+    .stat-card.orange .icon-bg {
+        background: var(--warning-color);
+    }
+
+    .stat-card.red .value {
+        color: var(--danger-color);
+    }
+
+    .stat-card.red .icon-bg {
+        background: var(--danger-color);
+    }
+
+    .stat-card.purple .value {
+        color: var(--purple-color);
+    }
+
+    .stat-card.purple .icon-bg {
+        background: var(--purple-color);
+    }
+
+    .toolbar {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 16px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .term-tag {
+        background: var(--primary-color);
+        color: var(--white);
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .info-tag {
+        background: var(--success-color-light);
+        color: var(--success-color);
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-input {
+        width: 220px;
+        padding: 8px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color .2s;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary-color);
+    }
+
+    select.sel {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        outline: none;
+        background: var(--card-bg);
+    }
+
+    select.sel:focus {
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: var(--white);
+        border: none;
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background .2s;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-color-hover);
+    }
+
+    .btn-ghost {
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all .2s;
+    }
+
+    .btn-ghost:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .table-card {
+        background: var(--card-bg);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .card-title {
+        padding: 18px 24px 14px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--bg-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-title::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 16px;
+        background: var(--primary-color);
+        border-radius: 2px;
+    }
+
+    .table-wrap {
+        padding: 0 16px 20px;
+        overflow-x: auto;
+    }
+
+    table.score-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 14px;
+        min-width: 900px;
+    }
+
+    .score-table thead th {
+        background: var(--hover-bg);
+        color: var(--text-secondary);
+        font-weight: 600;
+        padding: 12px 10px;
+        text-align: center;
+        border-bottom: 2px solid var(--border-color-light);
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .score-table tbody td {
+        padding: 12px 10px;
+        text-align: center;
+        border-bottom: 1px solid var(--hover-bg);
+        color: var(--text-secondary);
+        transition: background .15s;
+        white-space: nowrap;
+    }
+
+    .score-table tbody tr:hover td {
+        background: var(--primary-color-light);
+    }
+
+    .score-table tbody tr.excellent td {
+        background: var(--primary-color-light);
+    }
+
+    .score-table tbody tr.excellent:hover td {
+        background: var(--primary-color-light);
+    }
+
+    .score-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 40px;
+    }
+
+    .score-badge.high {
+        background: var(--success-color-light);
+        color: var(--success-color);
+    }
+
+    .score-badge.mid {
+        background: var(--primary-color-light);
+        color: var(--primary-color);
+    }
+
+    .score-badge.low {
+        background: var(--danger-color-light);
+        color: var(--danger-color);
+    }
+
+    .pass-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .pass-badge.pass {
+        background: var(--success-color-light);
+        color: var(--success-color);
+    }
+
+    .pass-badge.fail {
+        background: var(--danger-color-light);
+        color: var(--danger-color);
+    }
+
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--border-color-light);
+        flex-wrap: wrap;
+    }
+
+    .pagination-info {
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .page-size-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        margin-right: 6px;
+    }
+
+    .page-size-select {
+        height: 30px;
+        padding: 0 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--input-bg);
+        color: var(--text-primary);
+        outline: none;
+    }
+
+    .page-btn,
+    .page-num {
+        min-width: 32px;
+        height: 30px;
+        padding: 0 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+    .page-btn:hover:not(:disabled),
+    .page-num:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .page-btn:disabled {
+        cursor: not-allowed;
+        opacity: .5;
+    }
+
+    .page-num.active {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+        color: var(--white);
+    }
+
+    #pageNumberList {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .page-ellipsis {
+        color: var(--text-secondary);
+        padding: 0 2px;
+        font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+        .pagination-bar {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .pagination-controls {
+            justify-content: flex-start;
+        }
+    }
+    .page-footer {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 12px;
+        padding: 16px 0;
+    }
+
+    @media (max-width: 900px) {
+        .stats-row {
+            grid-template-columns:repeat(2, 1fr);
+        }
+
+        .charts-grid {
+            grid-template-columns:1fr;
+        }
+    }
+
+</style>
+<div class="page-wrap">
+
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <span class="term-tag" id="termTag">学业管理 · 成绩明细</span>
+            <label for="yearSel">
+                <select class="sel" id="yearSel">
+                    <option value="">全部学年</option>
+                    <option value="2025-2026">2025-2026</option>
+                    <option value="2024-2025">2024-2025</option>
+                </select>
+            </label>
+            <label for="termSel">
+                <select class="sel" id="termSel">
+                    <option value="">全部学期</option>
+                    <option value="春">春季</option>
+                    <option value="秋">秋季</option>
+                </select>
+            </label>
+            <span class="info-tag" id="courseCountTag">共 10 门课程</span>
+        </div>
+        <div class="toolbar-right">
+            <label for="searchInput"></label>
+            <input id="searchInput" class="search-input" placeholder="输入课程名/课程组搜索">
+            <button id="searchBtn" class="btn-primary">查询</button>
+            <button id="resetBtn" class="btn-ghost">重置</button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="card-title">成绩明细</div>
+        <div class="table-wrap">
+            <table class="score-table">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>学年</th>
+                    <th>学期</th>
+                    <th>课程号</th>
+                    <th>课程名称</th>
+                    <th>课序号</th>
+                    <th>课程组</th>
+                    <th>期末</th>
+                    <th>总评</th>
+                    <th>绩点</th>
+                    <th>学分</th>
+                    <th>备注</th>
+                    <th>考试性质</th>
+                    <th>课程性质</th>
+                    <th>及格标志</th>
+                </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="pagination-bar">
+            <div class="pagination-info">
+                共 <span id="pageTotal">0</span> 条记录，第 <span id="pageCurrent">1</span> / <span id="pageCount">1</span> 页
+            </div>
+            <div class="pagination-controls">
+                <label class="page-size-label">
+                    每页
+                    <select id="pageSizeSelect" class="page-size-select">
+                        <option value="10">10 条</option>
+                        <option value="20">20 条</option>
+                        <option value="50">50 条</option>
+                        <option value="100">100 条</option>
+                    </select>
+                </label>
+                <button class="page-btn" id="firstPageBtn" type="button">首页</button>
+                <button class="page-btn" id="prevPageBtn" type="button">上一页</button>
+                <span id="pageNumberList"></span>
+                <button class="page-btn" id="nextPageBtn" type="button">下一页</button>
+                <button class="page-btn" id="lastPageBtn" type="button">末页</button>
+            </div>
+        </div>
+    </div>
+    <div class="page-footer">成绩明细页 · 共 <span id="totalNum">0</span> 条记录</div>
+</div>
+<script>
+    (() => {
+
+
+        const API_SCORE_LIST = '/student_system/api/score/scoreList';
+        let currentData = [];
+        let currentPage = 1;
+        let pageSize = 10;
+
+
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+
+        const getVisiblePages = (totalPages, current) => {
+            const pages = [];
+            const maxButtons = 7;
+            if (totalPages <= maxButtons) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+                return pages;
+            }
+            let start = Math.max(1, current - 3);
+            let end = Math.min(totalPages, start + maxButtons - 1);
+            start = Math.max(1, end - maxButtons + 1);
+            if (start > 1) pages.push(1, '...');
+            for (let i = start; i <= end; i++) pages.push(i);
+            if (end < totalPages) pages.push('...', totalPages);
+            return pages;
+        };
+
+        const renderPagination = total => {
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            document.getElementById('pageTotal').textContent = total;
+            document.getElementById('pageCurrent').textContent = currentPage;
+            document.getElementById('pageCount').textContent = totalPages;
+            document.getElementById('firstPageBtn').disabled = currentPage <= 1;
+            document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+            document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+            document.getElementById('lastPageBtn').disabled = currentPage >= totalPages;
+
+            const numberList = document.getElementById('pageNumberList');
+            numberList.innerHTML = '';
+            getVisiblePages(totalPages, currentPage).forEach(page => {
+                if (page === '...') {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'page-ellipsis';
+                    ellipsis.textContent = '...';
+                    numberList.appendChild(ellipsis);
+                    return;
+                }
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'page-num' + (page === currentPage ? ' active' : '');
+                button.dataset.page = page;
+                button.textContent = page;
+                numberList.appendChild(button);
+            });
+        };
+
+        const renderTable = (data) => {
+            const total = Array.isArray(data) ? data.length : 0;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const pageData = data.slice(startIndex, startIndex + pageSize);
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            pageData.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                const totalScore = +item.totalScore || 0;
+                const finalScore = +item.finalScore || 0;
+                const gpa = +item.gpa || 0;
+                const credit = +item.credit || 0;
+                if (totalScore >= 90) tr.className = 'excellent';
+                const fb = finalScore >= 90 ? 'high' : (finalScore >= 60 ? 'mid' : 'low');
+                const tb = totalScore >= 90 ? 'high' : (totalScore >= 60 ? 'mid' : 'low');
+                const gc = gpa >= 4.0 ? 'gpa-high' : (gpa >= 3.0 ? 'gpa-mid' : 'gpa-low');
+                const pc = item.passFlag === '及格' ? 'pass' : 'fail';
+                tr.innerHTML =
+                    '<td>' + (startIndex + idx + 1) + '</td>' +
+                    '<td>' + escapeHtml(item.schoolYear) + '</td>' +
+                    '<td>' + escapeHtml(item.term) + '</td>' +
+                    '<td>' + escapeHtml(item.courseNo) + '</td>' +
+                    '<td style="font-weight:500;color:var(--text-primary);text-align:left;padding-left:12px">' + escapeHtml(item.courseName) + '</td>' +
+                    '<td>' + escapeHtml(item.serialNo) + '</td>' +
+                    '<td style="font-size:12px">' + escapeHtml(item.courseGroup) + '</td>' +
+                    '<td><span class="score-badge ' + fb + '">' + (item.finalScore ?? '--') + '</span></td>' +
+                    '<td><span class="score-badge ' + tb + '">' + (item.totalScore ?? '--') + '</span></td>' +
+                    '<td class="' + gc + '">' + gpa.toFixed(1) + '</td>' +
+                    '<td>' + (credit % 1 === 0 ? credit.toFixed(0) : credit.toFixed(2)) + '</td>' +
+                    '<td>' + escapeHtml(item.remark) + '</td>' +
+                    '<td>' + escapeHtml(item.examType) + '</td>' +
+                    '<td>' + escapeHtml(item.courseType) + '</td>' +
+                    '<td><span class="pass-badge ' + pc + '">' + escapeHtml(item.passFlag) + '</span></td>';
+                tbody.appendChild(tr);
+            });
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='15' style='padding:40px;color:var(--text-secondary)'>暂无匹配数据</td></tr>";
+            }
+            document.getElementById('totalNum').textContent = total;
+            document.getElementById('courseCountTag').textContent = '共 ' + total + ' 门课程';
+            renderPagination(total);
+        };
+
+
+
+        const fetchFromServer = () => {
+            const courseName = (document.getElementById('searchInput').value || '').trim();
+            const schoolYear = document.getElementById('yearSel').value;
+            const term = document.getElementById('termSel').value;
+            axios.post(API_SCORE_LIST, {courseName, schoolYear, term})
+                .then(res => {
+                    if (res.data?.code === 401) {
+                        window.top.location.href = '/student_system/login.html';
+                        return;
+                    }
+                    if (res.data && res.data.code === 200 && Array.isArray(res.data.data)) {
+                        currentData = res.data.data;
+                    } else {
+                        console.warn('成绩列表接口返回异常');
+                        currentData = [];
+                        window.ElementPlus?.ElMessage?.error('成绩数据获取失败，请稍后重试');
+                    }
+                    currentPage = 1;
+                    renderTable(currentData);
+                }).catch(err => {
+                    console.warn('成绩列表请求失败:', err);
+                    currentData = [];
+                    currentPage = 1;
+                    renderTable(currentData);
+                    window.ElementPlus?.ElMessage?.error('成绩数据加载失败，请稍后重试');
+                }
+            );
+        };
+
+        fetchFromServer();
+        document.getElementById('searchBtn').onclick = fetchFromServer;
+        document.getElementById('resetBtn').onclick = () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('yearSel').value = '';
+            document.getElementById('termSel').value = '';
+            fetchFromServer();
+        };
+        document.getElementById('searchInput').addEventListener('keyup', e => {
+            if (e.key === 'Enter') fetchFromServer();
+        });
+        document.getElementById('yearSel').onchange = fetchFromServer;
+        document.getElementById('termSel').onchange = fetchFromServer;
+
+
+        const goToPage = page => {
+            const totalPages = Math.max(1, Math.ceil(currentData.length / pageSize));
+            currentPage = Math.min(Math.max(1, Number(page) || 1), totalPages);
+            renderTable(currentData);
+        };
+
+        document.getElementById('firstPageBtn').onclick = () => goToPage(1);
+        document.getElementById('prevPageBtn').onclick = () => goToPage(currentPage - 1);
+        document.getElementById('nextPageBtn').onclick = () => goToPage(currentPage + 1);
+        document.getElementById('lastPageBtn').onclick = () => {
+            goToPage(Math.max(1, Math.ceil(currentData.length / pageSize)));
+        };
+        document.getElementById('pageNumberList').onclick = event => {
+            const button = event.target.closest('[data-page]');
+            if (button) goToPage(button.dataset.page);
+        };
+        document.getElementById('pageSizeSelect').onchange = event => {
+            pageSize = Number(event.target.value) || 10;
+            currentPage = 1;
+            renderTable(currentData);
+        };
+    })();
+</script>

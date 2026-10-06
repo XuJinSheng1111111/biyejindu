@@ -1,0 +1,631 @@
+<style>
+    .page-wrap{padding:24px;max-width:1400px;margin:0 auto;}
+
+    .page-wrap *{box-sizing:border-box;}
+    .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;}
+    .stat-card{background:var(--card-bg);border-radius:10px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+    .stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.1);}
+    .stat-card .label{font-size:13px;color:var(--text-secondary);margin-bottom:8px;}
+    .stat-card .value{font-size:28px;font-weight:700;}
+    .stat-card .sub{font-size:12px;color:var(--text-secondary);margin-top:4px;}
+    .stat-card .icon-bg{position:absolute;right:-8px;bottom:-8px;width:72px;height:72px;border-radius:50%;opacity:.15;}
+    .stat-card.blue .value{color:var(--primary-color);}   .stat-card.blue .icon-bg{background:var(--primary-color);}
+    .stat-card.green .value{color:var(--success-color);}  .stat-card.green .icon-bg{background:var(--success-color);}
+    .stat-card.orange .value{color:var(--warning-color);} .stat-card.orange .icon-bg{background:var(--warning-color);}
+    .stat-card.red .value{color:var(--danger-color);}    .stat-card.red .icon-bg{background:var(--danger-color);}
+    .stat-card.purple .value{color:var(--purple-color);} .stat-card.purple .icon-bg{background:var(--purple-color);}
+
+    .toolbar{background:var(--card-bg);border-radius:10px;padding:16px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+    .toolbar-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .term-tag{background:var(--primary-color);color: var(--white);padding:4px 14px;border-radius:20px;font-size:13px;font-weight:500;}
+    .info-tag{background:var(--success-color-light);color:var(--success-color);padding:4px 14px;border-radius:20px;font-size:13px;}
+    .toolbar-right{display:flex;align-items:center;gap:10px;}
+    .search-input{width:220px;padding:8px 14px;border:1px solid var(--border-color);border-radius:6px;font-size:14px;outline:none;transition:border-color .2s;}
+    .search-input:focus{border-color:var(--primary-color);}
+    select.sel{padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:14px;outline:none;background:var(--card-bg);}
+    select.sel:focus{border-color:var(--primary-color);}
+    .btn-primary{background:var(--primary-color);color: var(--white);border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;transition:background .2s;}
+    .btn-primary:hover{background:var(--primary-color-hover);}
+    .btn-ghost{background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--border-color);padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .2s;}
+    .btn-ghost:hover{border-color:var(--primary-color);color:var(--primary-color);}
+
+    .table-card{background:var(--card-bg);border-radius:10px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;}
+    .card-title{padding:18px 24px 14px;font-size:16px;font-weight:600;color:var(--text-primary);border-bottom:1px solid var(--bg-color);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .card-title .title-text{display:flex;align-items:center;gap:8px;}
+    .card-title .title-text::before{content:'';display:inline-block;width:4px;height:16px;background:var(--primary-color);border-radius:2px;}
+    .card-tip{font-size:12px;color:var(--text-secondary);font-weight:400;}
+
+    .table-wrap{padding:0 16px;overflow-x:auto;overflow-y:auto;max-height:705px;}
+    .table-wrap::-webkit-scrollbar{width:8px;height:8px;}
+    .table-wrap::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:4px;}
+    .table-wrap::-webkit-scrollbar-thumb:hover{background:var(--text-secondary);}
+    .table-wrap::-webkit-scrollbar-track{background:transparent;}
+    table.score-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;min-width:900px;}
+    .score-table thead th{background:var(--hover-bg);color:var(--text-secondary);font-weight:600;padding:12px 10px;text-align:center;border-bottom:2px solid var(--border-color-light);white-space:nowrap;font-size:13px;position:sticky;top:0;z-index:2;}
+    .score-table tbody td{padding:12px 10px;text-align:center;border-bottom:1px solid var(--hover-bg);color:var(--text-secondary);transition:background .15s;white-space:nowrap;}
+    .score-table tbody tr:hover td{background:var(--primary-color-light);}
+    .score-table tbody tr.excellent td{background:var(--primary-color-light);}
+    .score-table tbody tr.excellent:hover td{background:var(--primary-color-light);}
+    .score-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;min-width:40px;}
+    .score-badge.high{background:var(--success-color-light);color:var(--success-color);}
+    .score-badge.mid{background:var(--primary-color-light);color:var(--primary-color);}
+    .score-badge.low{background:var(--danger-color-light);color:var(--danger-color);}
+    .gpa-high{color:var(--success-color);font-weight:600;}
+    .gpa-mid{color:var(--warning-color);font-weight:600;}
+    .gpa-low{color:var(--danger-color);font-weight:600;}
+    .pass-badge{display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;}
+    .pass-badge.pass{background:var(--success-color-light);color:var(--success-color);}
+    .pass-badge.fail{background:var(--danger-color-light);color:var(--danger-color);}
+
+
+    .charts-pies{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+    .charts-list{display:flex;flex-direction:column;gap:20px;margin-bottom:20px;}
+    .chart-card{background:var(--card-bg);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;}
+    .chart-box{width:100%;padding:0 10px 10px;}
+
+    .charts-pies .chart-box{height:300px;}
+
+
+    .chart-scroll{overflow-x:auto;overflow-y:hidden;padding:0 10px 10px;}
+    .chart-scroll::-webkit-scrollbar{height:8px;}
+    .chart-scroll::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:4px;}
+    .chart-scroll::-webkit-scrollbar-thumb:hover{background:var(--text-secondary);}
+    .chart-scroll::-webkit-scrollbar-track{background:transparent;}
+    .chart-box-dyn{height:420px;min-width:100%;}
+    .scroll-hint{display:none;}
+    .scroll-hint.show{display:inline-block;animation:hintPulse 2s ease-in-out infinite;}
+    @keyframes hintPulse{50%{opacity:.5;}}
+
+    .page-footer{text-align:center;color:var(--text-secondary);font-size:12px;padding:16px 0;}
+
+    .empty-tip{padding:60px;text-align:center;color:var(--text-secondary);font-size:14px;}
+
+    @media (max-width:900px){
+        .stats-row{grid-template-columns:repeat(2,1fr);}
+        .charts-pies{grid-template-columns:1fr;}
+    }
+</style>
+<div class="page-wrap">
+
+    <div class="stats-row">
+        <div class="stat-card blue"><div class="label">期末平均分(加权)</div><div class="value" id="avgFinal">--</div><div class="sub">按学分加权</div><div class="icon-bg"></div></div>
+        <div class="stat-card purple"><div class="label">总评平均分(加权)</div><div class="value" id="avgScore">--</div><div class="sub">按学分加权</div><div class="icon-bg"></div></div>
+        <div class="stat-card green"><div class="label">总学分</div><div class="value" id="totalCredit">--</div><div class="sub">已获得学分</div><div class="icon-bg"></div></div>
+        <div class="stat-card orange"><div class="label">平均绩点(加权)</div><div class="value" id="avgGpa">--</div><div class="sub">GPA</div><div class="icon-bg"></div></div>
+        <div class="stat-card red"><div class="label">课程门数 / 及格率</div><div class="value" id="passRate">--</div><div class="sub">全部课程通过</div><div class="icon-bg"></div></div>
+    </div>
+
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <span class="term-tag" id="termTag">学业管理 · 综合成绩</span>
+            <label for="yearSel">
+                <select class="sel" id="yearSel">
+                    <option value="">全部学年</option>
+                    <option value="2025-2026">2025-2026</option>
+                    <option value="2024-2025">2024-2025</option>
+                </select>
+            </label>
+            <label for="termSel">
+                <select class="sel" id="termSel">
+                    <option value="">全部学期</option>
+                    <option value="春">春季</option>
+                    <option value="秋">秋季</option>
+                </select>
+            </label>
+            <span class="info-tag" id="courseCountTag">共 0 门课程</span>
+        </div>
+        <div class="toolbar-right">
+            <label for="searchInput"></label><input id="searchInput" class="search-input" placeholder="输入课程名/课程组/课程性质搜索">
+            <button id="searchBtn" class="btn-primary">查询</button>
+            <button id="resetBtn" class="btn-ghost">重置</button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="card-title">
+            <span class="title-text">成绩明细</span>
+            <span class="card-tip">↓ 默认显示前15条，滚动鼠标/拖动滑块查看更多</span>
+        </div>
+        <div class="table-wrap">
+            <table class="score-table">
+                <thead><tr>
+                    <th>学年</th><th>学期</th><th>课程号</th><th>课程名称</th><th>课序号</th><th>课程组</th>
+                    <th>期末</th><th>总评</th><th>绩点</th><th>学分</th><th>备注</th>
+                    <th>考试性质</th><th>课程性质</th><th>及格标志</th>
+                </tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="charts-pies">
+        <div class="chart-card">
+            <div class="card-title"><span class="title-text">总评成绩等级分布</span></div>
+            <div id="chart-pie" class="chart-box"></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-title"><span class="title-text">学分占比（按课程组）</span></div>
+            <div id="chart-ring" class="chart-box"></div>
+        </div>
+    </div>
+
+    <div class="charts-list">
+        <div class="chart-card">
+            <div class="card-title">
+                <span class="title-text">各科期末 vs 总评对比</span>
+                <span class="card-tip scroll-hint" id="hint-bar">⇆ 课程较多，可左右滑动</span>
+            </div>
+            <div class="chart-scroll"><div id="chart-bar" class="chart-box-dyn"></div></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-title">
+                <span class="title-text">学分与绩点分析</span>
+                <span class="card-tip scroll-hint" id="hint-mix">⇆ 课程较多，可左右滑动</span>
+            </div>
+            <div class="chart-scroll"><div id="chart-mix" class="chart-box-dyn"></div></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-title">
+                <span class="title-text">期末与总评差值（平时成绩贡献）</span>
+                <span class="card-tip">绿色=平时加分，红色=扣分，按差值排序 · 课程多可左右滑动</span>
+            </div>
+            <div class="chart-scroll"><div id="chart-diff" class="chart-box-dyn"></div></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-title">
+                <span class="title-text">课程绩点对比（各课GPA从高到低）</span>
+                <span class="card-tip scroll-hint" id="hint-radar">⇆ 课程较多，可左右滑动</span>
+            </div>
+            <div class="chart-scroll"><div id="chart-radar" class="chart-box-dyn"></div></div>
+        </div>
+    </div>
+    <div class="page-footer">综合成绩页 · 数据来源：学生智能学业管理系统</div>
+</div>
+<script>
+    (() => {
+        const scoreList = [];
+        let currentData = scoreList.slice();
+
+        const $ = id => document.getElementById(id);
+
+
+
+        const fit = (box, count, slot, hintId) => {
+            box.style.width = count * slot + 'px';
+            if (hintId) $(hintId)?.classList.toggle('show', count * slot > box.parentElement.clientWidth);
+        };
+
+        const catAxis = names => ({
+            type: 'category', data: names,
+            axisTick: { alignWithLabel: true },
+            axisLabel: { interval: 0, rotate: 30, fontSize: 11, hideOverlap: true }
+        });
+
+        const GRID = { left: 30, right: 24, containLabel: true };
+        const ANIM = { animationDuration: 700, animationEasing: 'cubicOut' };
+
+        const grad = (a, b) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: a }, { offset: 1, color: b }]);
+
+
+        const trunc = (name, n) => {
+            if (!name) return '';
+            return name.length>n ? name.slice(0,n)+'…' : name;
+        };
+
+
+        const renderStats = (data) => {
+            const el = id => document.getElementById(id);
+            if (!el('avgFinal')) return;
+            let wFinal=0,wTotal=0,wGpa=0,totalCredit=0,pass=0;
+            const semMap = {};
+            data.forEach(i => {
+                wFinal += (+i.finalScore||0)*(+i.credit||0);
+                wTotal += (+i.totalScore||0)*(+i.credit||0);
+                wGpa += (+i.gpa||0)*(+i.credit||0);
+                totalCredit += (+i.credit||0);
+                if (i.passFlag === '及格') pass++;
+
+                const yNum = +String(i.schoolYear||'').substring(0,4);
+                const t = i.term || '';
+                if (yNum && t) {
+                    const key = yNum + '|' + t;
+                    if (!semMap[key]) semMap[key] = { y:yNum, t, wGpa:0, credit:0 };
+                    semMap[key].wGpa += (+i.gpa||0)*(+i.credit||0);
+                    semMap[key].credit += (+i.credit||0);
+                }
+            });
+            const avgF = totalCredit ? (wFinal/totalCredit).toFixed(2) : '0';
+            const avgT = totalCredit ? (wTotal/totalCredit).toFixed(2) : '0';
+            const avgG = totalCredit ? (wGpa/totalCredit).toFixed(2) : '0';
+            el('avgFinal').textContent = avgF;
+            el('avgScore').textContent = avgT;
+            el('totalCredit').textContent = totalCredit.toFixed(2);
+            el('avgGpa').textContent = avgG;
+            el('passRate').textContent = data.length ? data.length+'门 / '+((pass/data.length)*100).toFixed(0)+'%' : '--';
+
+
+            const trend = Object.values(semMap)
+                .sort((a,b) => a.y - b.y || (a.t==='秋'?0:1) - (b.t==='秋'?0:1))
+                .slice(-5)
+                .map(s => ({
+                    label: String(s.y).substring(2) + s.t,
+                    gpa: +(s.wGpa/s.credit||0).toFixed(2),
+                    credit: +s.credit.toFixed(1)
+                }));
+
+
+            const shared = {
+                credit: +totalCredit.toFixed(1),
+                avgScore: +(wTotal/totalCredit||0).toFixed(2),
+                gpa: +(wGpa/totalCredit||0).toFixed(2),
+                trend
+            };
+            try { window.top.__scoreStats = shared; } catch (e) {}
+            try { localStorage.setItem('sams_scorestats', JSON.stringify(shared)); } catch (e) {}
+            const ev = () => new CustomEvent('statsUpdated', { detail: shared });
+            window.dispatchEvent(ev());
+            if (window.top !== window) {
+                try { window.top.dispatchEvent(ev()); } catch (e) {}
+            }
+        };
+
+
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+
+        const renderTable = (data) => {
+            const tbody = document.getElementById('tableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                if (+item.totalScore >= 90) tr.className = 'excellent';
+                const fb = +item.finalScore>=90?'high':(+item.finalScore>=60?'mid':'low');
+                const tb = +item.totalScore>=90?'high':(+item.totalScore>=60?'mid':'low');
+                const gv = +item.gpa||0;
+                const gc = gv>=4.0?'gpa-high':(gv>=3.0?'gpa-mid':'gpa-low');
+                const pc = item.passFlag==='及格'?'pass':'fail';
+                tr.innerHTML =
+                    '<td>'+escapeHtml(item.schoolYear)+'</td>'+
+                    '<td>'+escapeHtml(item.term)+'</td>'+
+                    '<td>'+escapeHtml(item.courseNo)+'</td>'+
+                    '<td style="font-weight:500;color:var(--text-primary);text-align:left;padding-left:12px">'+escapeHtml(item.courseName)+'</td>'+
+                    '<td>'+escapeHtml(item.serialNo)+'</td>'+
+                    '<td style="font-size:12px">'+escapeHtml(item.courseGroup)+'</td>'+
+                    '<td><span class="score-badge '+fb+'">'+(item.finalScore??'--')+'</span></td>'+
+                    '<td><span class="score-badge '+tb+'">'+(item.totalScore??'--')+'</span></td>'+
+                    '<td class="'+gc+'">'+gv.toFixed(1)+'</td>'+
+                    '<td>'+((+item.credit%1===0)?(+item.credit).toFixed(0):(+item.credit||0).toFixed(2))+'</td>'+
+                    '<td>'+escapeHtml(item.remark)+'</td>'+
+                    '<td>'+escapeHtml(item.examType)+'</td>'+
+                    '<td>'+escapeHtml(item.courseType)+'</td>'+
+                    '<td><span class="pass-badge '+pc+'">'+escapeHtml(item.passFlag)+'</span></td>';
+                tbody.appendChild(tr);
+            });
+            if (data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='14' style='padding:40px;color:var(--text-secondary)'>暂无匹配数据</td></tr>";
+            }
+        };
+
+
+        const charts = {};
+
+
+        const renderBarChart = (data) => {
+            const el = $('chart-bar');
+            if (!el) return;
+            fit(el, data.length, 64, 'hint-bar');
+            const c = charts.bar ||= echarts.init(el);
+            window.__pageCharts.scoreAll_bar = window.__pageCharts.score_bar = window.__pageCharts.scoreChart_bar = c;
+            c.resize();
+            c.setOption({
+                ...ANIM,
+                tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+                    formatter: params => {
+                        const d = data[params[0].dataIndex];
+                        return '<b>'+escapeHtml(d.courseName)+'</b><br/>' +
+                            params.map(p => p.marker+p.seriesName+'：'+p.value).join('<br/>');
+                    }
+                },
+                legend: { data:['期末成绩','总评成绩'], top:6, textStyle:{fontSize:12} },
+                grid: { ...GRID, top:40, bottom:10 },
+                xAxis: catAxis(data.map(i => trunc(i.courseName, 14))),
+                yAxis: { type:'value', name:'分数', min:0, max:100, nameTextStyle:{fontSize:11} },
+                series: [
+                    {
+                        name:'期末成绩', type:'bar', barWidth:12, barGap:'60%',
+                        data: data.map(i=>+i.finalScore||0),
+                        itemStyle:{ color:themeCssVar('--text-secondary'), borderRadius:[4,4,0,0] },
+                        label:{ show:true, position:'top', fontSize:10, color:themeCssVar('--text-secondary') },
+                        emphasis:{ focus:'series' }
+                    },
+                    {
+                        name:'总评成绩', type:'bar', barWidth:12,
+                        data: data.map(i=>+i.totalScore||0),
+                        itemStyle:{ color:grad(themeCssVar('--primary-color-hover'),themeCssVar('--primary-color')), borderRadius:[4,4,0,0] },
+                        label:{ show:true, position:'top', fontSize:10, color:themeCssVar('--primary-color') },
+                        emphasis:{ focus:'series' }
+                    }
+                ]
+            }, { notMerge: true });
+        };
+
+
+        const renderPieChart = (data) => {
+            const el = document.getElementById('chart-pie');
+            if (!el) return;
+            const c = charts.pie || (charts.pie = echarts.init(el));
+            window.__pageCharts.scoreAll_pie = window.__pageCharts.scoreChart_pie = c;
+            let exc=0,good=0,med=0,pass=0,fail=0;
+            data.forEach(i => {
+                const s = +i.totalScore||0;
+                if(s>=90)exc++;else if(s>=80)good++;else if(s>=70)med++;else if(s>=60)pass++;else fail++;
+            });
+            c.setOption({
+                tooltip:{ trigger:'item', formatter:'{b}: {c}门 ({d}%)' },
+                legend:{ orient:'vertical', right:8, top:'center', textStyle:{fontSize:11}, type:'scroll' },
+                color:[themeCssVar('--success-color'),themeCssVar('--primary-color'),themeCssVar('--warning-color'),themeCssVar('--danger-color'),themeCssVar('--text-secondary')],
+                series:[{
+                    type:'pie', radius:['45%','72%'], center:['38%','52%'],
+                    itemStyle:{ borderRadius:6, borderColor:themeCssVar('--card-bg'), borderWidth:2 },
+                    label:{ show:true, formatter:'{b}\n{c}门', fontSize:11 },
+                    data:[
+                        {value:exc,name:'优秀(90+)'},
+                        {value:good,name:'良好(80-89)'},
+                        {value:med,name:'中等(70-79)'},
+                        {value:pass,name:'及格(60-69)'},
+                        {value:fail,name:'不及格(<60)'}
+                    ]
+                }]
+            }, { notMerge: true });
+        };
+
+
+        const renderMixChart = (data) => {
+            const el = $('chart-mix');
+            if (!el) return;
+            fit(el, data.length, 56, 'hint-mix');
+            const c = charts.mix ||= echarts.init(el);
+            window.__pageCharts.scoreAll_mix = window.__pageCharts.scoreChart_mix = c;
+            c.resize();
+            c.setOption({
+                ...ANIM,
+                tooltip:{ trigger:'axis', axisPointer:{type:'shadow'},
+                    formatter: params => {
+                        const d = data[params[0].dataIndex];
+                        return '<b>'+escapeHtml(d.courseName)+'</b><br/>' +
+                            params.map(p => p.marker+p.seriesName+'：'+p.value).join('<br/>');
+                    }
+                },
+                legend:{ data:['学分','绩点'], top:6, textStyle:{fontSize:12} },
+                grid:{ ...GRID, top:40, bottom:10 },
+                xAxis: catAxis(data.map(i => trunc(i.courseName, 14))),
+                yAxis:[
+                    { type:'value', name:'学分', min:0, nameTextStyle:{fontSize:11,color:themeCssVar('--success-color')},
+                        axisLabel:{color:themeCssVar('--success-color')} },
+                    { type:'value', name:'绩点', min:0, max:5, nameTextStyle:{fontSize:11,color:themeCssVar('--danger-color')},
+                        axisLabel:{color:themeCssVar('--danger-color')}, splitLine:{show:false} }
+                ],
+                series:[
+                    {
+                        name:'学分', type:'bar', barWidth:16, yAxisIndex:0,
+                        data: data.map(i=>+(+i.credit||0).toFixed(2)),
+                        itemStyle:{ color:grad(themeCssVar('--success-color'),themeCssVar('--success-color')), borderRadius:[4,4,0,0] },
+                        label:{ show:true, position:'top', fontSize:10, color:themeCssVar('--success-color'),
+                            formatter:p=>p.value+'学分' },
+                        emphasis:{ focus:'series' }
+                    },
+                    {
+                        name:'绩点', type:'line', yAxisIndex:1, smooth:true, z:3,
+                        data: data.map(i=>+(+i.gpa||0).toFixed(2)),
+                        itemStyle:{ color:themeCssVar('--danger-color'), borderColor:themeCssVar('--card-bg'), borderWidth:1.5 },
+                        lineStyle:{ width:2.5, color:themeCssVar('--danger-color') },
+                        symbol:'circle', symbolSize:8,
+                        areaStyle:{ color:grad('rgba(245,108,108,.18)','rgba(245,108,108,0)') },
+                        emphasis:{ focus:'series' }
+                    }
+                ]
+            }, { notMerge: true });
+        };
+
+
+        const renderRingChart = (data) => {
+            const el = document.getElementById('chart-ring');
+            if (!el) return;
+            const c = charts.ring || (charts.ring = echarts.init(el));
+            window.__pageCharts.scoreAll_ring = window.__pageCharts.scoreChart_ring = c;
+            const gm = {};
+            data.forEach(i => { gm[i.courseGroup||'其他'] = (gm[i.courseGroup||'其他']||0)+(+i.credit||0); });
+            let pd = Object.keys(gm).map(k=>({name:k, value:parseFloat(gm[k].toFixed(2))}));
+
+            if (pd.length > 8) {
+                const total = pd.reduce((s,i)=>s+i.value,0);
+                const keep = []; const other = {name:'其他', value:0};
+                pd.sort((a,b)=>b.value-a.value).forEach((item,i) => {
+                    if (i<7 || item.value/total >= 0.03) keep.push(item);
+                    else other.value += item.value;
+                });
+                if (other.value > 0) { other.value = parseFloat(other.value.toFixed(2)); keep.push(other); }
+                pd = keep;
+            }
+            c.setOption({
+                tooltip:{ trigger:'item', formatter:'{b}: {c}学分 ({d}%)' },
+                legend:{ orient:'vertical', right:5, top:'center', textStyle:{fontSize:11}, type:'scroll' },
+                color:[themeCssVar('--primary-color'),themeCssVar('--success-color'),themeCssVar('--warning-color'),themeCssVar('--danger-color'),themeCssVar('--purple-color'),themeCssVar('--course-teal'),themeCssVar('--text-primary'),themeCssVar('--warning-color')],
+                series:[{
+                    type:'pie', radius:['45%','72%'], center:['35%','52%'],
+                    itemStyle:{ borderRadius:6, borderColor:themeCssVar('--card-bg'), borderWidth:2 },
+                    label:{ show:true, formatter:'{b}\n{c}学分', fontSize:11 },
+                    data: pd
+                }]
+            }, { notMerge: true });
+        };
+
+
+        const renderDiffChart = (data) => {
+            const el = $('chart-diff');
+            if (!el) return;
+
+            const sorted = data.slice().sort((a,b) => ((+b.totalScore||0)-(+b.finalScore||0)) - ((+a.totalScore||0)-(+a.finalScore||0)));
+            fit(el, sorted.length, 48, null);
+            const c = charts.diff ||= echarts.init(el);
+            window.__pageCharts.scoreAll_diff = window.__pageCharts.scoreChart_diff = c;
+            c.resize();
+            const diffs = sorted.map(i => +((+i.totalScore||0)-(+i.finalScore||0)).toFixed(1));
+            c.setOption({
+                ...ANIM,
+                tooltip:{
+                    trigger:'axis', axisPointer:{type:'shadow'},
+                    formatter: params => {
+                        const idx = params[0].dataIndex;
+                        const d = sorted[idx];
+                        return '<b>'+escapeHtml(d.courseName)+'</b><br/>'
+                            + '期末：'+(d.finalScore??'--')+' · 总评：'+(d.totalScore??'--')
+                            + '<br/>差值：'+(diffs[idx]>0?'+':'')+diffs[idx];
+                    }
+                },
+                grid:{ ...GRID, top:30, bottom:10 },
+                xAxis: catAxis(sorted.map(i => trunc(i.courseName, 14))),
+                yAxis:{ type:'value', name:'差值（总评-期末）', nameTextStyle:{fontSize:11} },
+                series:[{
+                    type:'bar', barWidth:16, data:diffs,
+                    itemStyle:{
+                        borderRadius:4,
+                        color: p => p.value>=0 ? grad(themeCssVar('--success-color'),themeCssVar('--success-color')) : grad(themeCssVar('--danger-color'),themeCssVar('--danger-color'))
+                    },
+                    label:{
+                        show:true, position: p => p.value>=0?'top':'bottom', fontSize:10,
+                        formatter: p => (p.value>0?'+':'')+p.value,
+                        color: p => p.value>=0?themeCssVar('--success-color'):themeCssVar('--danger-color')
+                    },
+                    markLine:{
+                        silent:true, symbol:'none',
+                        data:[{yAxis:0, lineStyle:{color:themeCssVar('--border-color'),type:'dashed',width:1}}]
+                    }
+                }]
+            }, { notMerge: true });
+        };
+
+
+        const renderRadarChart = (data) => {
+            const el = $('chart-radar');
+            if (!el) return;
+
+            const sorted = data.slice().sort((a,b) => (+b.gpa||0) - (+a.gpa||0));
+            fit(el, sorted.length, 48, 'hint-radar');
+            const c = charts.radar ||= echarts.init(el);
+            window.__pageCharts.scoreAll_radar = window.__pageCharts.scoreChart_radar = c;
+            c.resize();
+            const gpas = sorted.map(i => +(+i.gpa||0).toFixed(2));
+            c.setOption({
+                ...ANIM,
+                tooltip:{
+                    trigger:'axis', axisPointer:{type:'shadow'},
+                    formatter: params => {
+                        const idx = params[0].dataIndex;
+                        const d = sorted[idx];
+                        return '<b>'+escapeHtml(d.courseName)+'</b><br/>'
+                            + '绩点：'+gpas[idx]+' · 学分：'+d.credit+' · 总评：'+d.totalScore;
+                    }
+                },
+                grid:{ ...GRID, top:30, bottom:10 },
+                xAxis: catAxis(sorted.map(i => trunc(i.courseName, 16))),
+                yAxis:{ type:'value', name:'GPA', min:0, max: Math.max(5, Math.ceil(Math.max(...gpas,0))),
+                    nameTextStyle:{fontSize:11} },
+                series:[{
+                    type:'bar', barWidth:18,
+                    data: gpas.map(v=>({
+                        value:v,
+                        itemStyle:{
+                            color: v>=4.0 ? grad(themeCssVar('--course-teal'),themeCssVar('--primary-color'))
+                                : v>=3.0 ? grad(themeCssVar('--success-color'),themeCssVar('--success-color'))
+                                    : v>=2.0 ? grad(themeCssVar('--warning-color'),themeCssVar('--warning-color'))
+                                        : grad(themeCssVar('--danger-color'),themeCssVar('--danger-color')),
+                            borderRadius:[4,4,0,0]
+                        }
+                    })),
+                    label:{ show:true, position:'top', fontSize:10,
+                        formatter: p => p.value.toFixed(2) },
+                    markLine:{
+                        silent:true, symbol:'none',
+                        data:[
+                            {yAxis:4.0, lineStyle:{color:themeCssVar('--primary-color'),type:'dashed',width:1},
+                                label:{formatter:'优秀 4.0',color:themeCssVar('--primary-color'),fontSize:10,position:'end'}},
+                            {yAxis:3.0, lineStyle:{color:themeCssVar('--success-color'),type:'dashed',width:1},
+                                label:{formatter:'良好 3.0',color:themeCssVar('--success-color'),fontSize:10,position:'end'}},
+                            {yAxis:2.0, lineStyle:{color:themeCssVar('--warning-color'),type:'dashed',width:1},
+                                label:{formatter:'及格 2.0',color:themeCssVar('--warning-color'),fontSize:10,position:'end'}}
+                        ]
+                    }
+                }]
+            }, { notMerge: true });
+        };
+
+        const renderAllCharts = (data) => {
+            if (!data.length) { Object.values(charts).forEach(c=>c && c.clear()); return; }
+            renderBarChart(data);
+            renderPieChart(data);
+            renderMixChart(data);
+            renderRingChart(data);
+            renderDiffChart(data);
+            renderRadarChart(data);
+        };
+
+
+
+        window.addEventListener('resize', () => Object.keys(charts).forEach(k=>charts[k] && charts[k].resize()));
+
+
+        const API_SCORE_LIST = '/student_system/api/score/scoreList';
+        const fetchFromServer = () => {
+            const kw = (document.getElementById('searchInput').value||'').trim();
+            const y = document.getElementById('yearSel').value;
+            const t = document.getElementById('termSel').value;
+            axios.post(API_SCORE_LIST, { courseName: kw, schoolYear: y, term: t })
+                .then(res => {
+                    const r = res.data;
+                    if (r?.code === 401) {
+                        window.top.location.href = '/student_system/login.html';
+                        return;
+                    }
+                    if (r && r.code === 200 && Array.isArray(r.data)) {
+                        scoreList.length = 0;
+                        r.data.forEach(i => scoreList.push(i));
+                    } else {
+                        scoreList.length = 0;
+                    }
+                    currentData = scoreList.slice();
+                    renderStats(currentData); renderTable(currentData); renderAllCharts(currentData);
+                    const cc = document.getElementById('courseCountTag');
+                    if (cc) cc.textContent = '共 ' + currentData.length + ' 门课程';
+                })
+                .catch(() => {
+                    scoreList.length = 0;
+                    currentData = scoreList.slice();
+                    renderStats(currentData); renderTable(currentData); renderAllCharts(currentData);
+                    const cc = document.getElementById('courseCountTag');
+                    if (cc) cc.textContent = '共 ' + currentData.length + ' 门课程';
+                    window.ElementPlus?.ElMessage?.error('成绩数据加载失败，请稍后重试');
+                });
+        };
+        fetchFromServer();
+
+
+        renderStats(currentData);
+        renderTable(currentData);
+        renderAllCharts(currentData);
+        document.getElementById('courseCountTag').textContent = '共 ' + currentData.length + ' 门课程';
+
+        document.getElementById('searchBtn').onclick = fetchFromServer;
+        document.getElementById('resetBtn').onclick  = () => {
+            if(document.getElementById('searchInput'))document.getElementById('searchInput').value='';
+            if(document.getElementById('yearSel'))document.getElementById('yearSel').value='';
+            if(document.getElementById('termSel'))document.getElementById('termSel').value='';
+            fetchFromServer();
+        };
+        document.getElementById('searchInput').addEventListener('keyup', e => { if (e.key === 'Enter') fetchFromServer(); });
+        document.getElementById('yearSel').onchange  = fetchFromServer;
+        document.getElementById('termSel').onchange  = fetchFromServer;
+    })();
+</script>

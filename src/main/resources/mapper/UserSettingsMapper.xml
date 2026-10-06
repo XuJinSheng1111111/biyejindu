@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.UserSettingsMapper">
+
+    <select id="selectByAccountId" resultType="pojo.UserSettings">
+        select id,
+               account_id,
+               theme,
+               theme_color,
+               font_size,
+               sidebar_collapsed,
+               guide_completed,
+               create_time,
+               update_time
+        from user_settings
+        where account_id = #{accountId}
+        limit 1
+    </select>
+
+    <insert id="insertIfAbsent" useGeneratedKeys="true" keyProperty="id">
+        insert ignore into user_settings
+        (account_id, theme, theme_color, font_size, sidebar_collapsed, guide_completed)
+        values
+        (#{accountId}, #{theme}, #{themeColor}, #{fontSize}, #{sidebarCollapsed}, #{guideCompleted})
+    </insert>
+
+    <update id="update">
+        update user_settings
+        set theme = #{theme},
+            theme_color = #{themeColor},
+            font_size = #{fontSize},
+            sidebar_collapsed = #{sidebarCollapsed},
+            update_time = now()
+        where account_id = #{accountId}
+    </update>
+
+    <update id="updateGuideCompleted">
+        update user_settings
+        set guide_completed = #{guideCompleted},
+            update_time = now()
+        where account_id = #{accountId}
+    </update>
+
+</mapper>

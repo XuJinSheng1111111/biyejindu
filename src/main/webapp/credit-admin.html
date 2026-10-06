@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#fff8fa">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <title>毕业进度小管家｜运营后台</title>
+    <link rel="stylesheet" href="static/css/credit-admin.css?v=20261006-mobile-1">
+</head>
+<body>
+<div class="admin-backdrop" aria-hidden="true">
+    <img src="static/image/graduation-whale-girl.png?v=20261006-cinematic" alt="">
+</div>
+<main>
+    <section class="login-page" id="accessPanel">
+        <p class="kicker">毕业进度小管家</p>
+        <h1>运营后台</h1>
+        <form id="accessForm">
+            <label for="adminKey">管理密钥</label>
+            <input id="adminKey" type="password" minlength="24" autocomplete="current-password" required>
+            <button class="main-action" type="submit">进入后台</button>
+        </form>
+        <p class="login-error" id="accessError" role="alert"></p>
+    </section>
+
+    <section class="dashboard is-hidden" id="dashboard">
+        <header class="masthead">
+            <div><p class="kicker">毕业<span>进度</span>小管家</p><h1>运营概览</h1></div>
+            <div class="header-actions"><time id="updatedAt"></time><button class="text-action" id="refreshButton" type="button">刷新数据</button><button class="text-action" id="lockButton" type="button">退出后台</button></div>
+        </header>
+
+        <dl class="metrics-ledger" aria-label="运营指标">
+            <div><dt>匿名用户</dt><dd id="usersMetric">0</dd></div>
+            <div><dt>学分核验</dt><dd id="auditsMetric">0</dd></div>
+            <div><dt>核验成功率</dt><dd id="successMetric">0%</dd></div>
+            <div><dt>方案复用</dt><dd id="reuseMetric">0</dd></div>
+        </dl>
+
+        <div class="operations-grid">
+            <section class="content-section" aria-labelledby="trend-title">
+                <header class="section-heading"><h2 id="trend-title">最近 14 天</h2></header>
+                <div class="trend-chart" id="trendChart" aria-label="最近十四天运营趋势"></div>
+            </section>
+            <section class="content-section" aria-labelledby="detail-title">
+                <header class="section-heading"><h2 id="detail-title">运行明细</h2></header>
+                <dl class="runtime-list"><div><dt>成功核验</dt><dd id="successAudits">0</dd></div><div><dt>失败核验</dt><dd id="failedAudits">0</dd></div><div><dt>新方案解析</dt><dd id="planUploads">0</dd></div><div><dt>已解析课程</dt><dd id="coursesParsed">0</dd></div></dl>
+            </section>
+        </div>
+
+        <section class="content-section plan-section" aria-labelledby="plan-upload-title">
+            <header class="section-heading"><h2 id="plan-upload-title">人才培养方案上传</h2></header>
+            <form id="planUploadForm">
+                <label><span>学校</span><input id="adminPlanSchool" name="school" type="text" maxlength="60" required></label>
+                <label><span>专业</span><input id="adminPlanMajor" name="major" type="text" maxlength="80" required></label>
+                <label><span>入学年级</span><input id="adminPlanCohort" name="cohort" type="text" maxlength="4" inputmode="numeric" pattern="20\d{2}" placeholder="例如：2024" required></label>
+                <label class="plan-file" for="adminPlanFile">
+                    <span>培养方案文件</span>
+                    <span class="file-picker-label" id="adminPlanFileLabel">选择培养方案文件</span>
+                    <input id="adminPlanFile" name="planFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt" aria-describedby="adminPlanFileHint" required>
+                    <small id="adminPlanFileHint">支持 PDF、Word、Excel、HTML、CSV、TXT；单个文件最大 8 MB</small>
+                </label>
+                <button class="main-action" id="adminPlanSubmit" type="submit">上传到方案库</button>
+            </form>
+            <p class="upload-result" id="planUploadResult" role="status"></p>
+            <section class="plan-library-admin" aria-labelledby="plan-library-title">
+                <header><h2 id="plan-library-title">方案库管理</h2><span id="planLibraryCount">0 份方案</span></header>
+                <div id="adminPlanList" class="admin-plan-list"></div>
+                <input id="replacementPlanFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt" hidden>
+            </section>
+        </section>
+
+        <section class="content-section feedback-section" aria-labelledby="feedback-title">
+            <header class="section-heading"><div><h2 id="feedback-title">问题反馈</h2><p id="feedbackCount">0 条待处理</p></div></header>
+            <div class="feedback-list" id="feedbackList"></div>
+        </section>
+    </section>
+</main>
+<div class="toast" id="adminToast" role="status" aria-live="polite"></div>
+<script src="static/js/credit-admin.js?v=20261006-security-1" defer></script>
+</body>
+</html>
