@@ -345,7 +345,19 @@ textarea:focus {
     justify-items: center;
     text-align: center;
 }
-.plan-choice { width: min(100%, 330px); }
+.plan-choice {
+    width: min(100%, 360px);
+    display: grid;
+    gap: 7px;
+    justify-items: center;
+}
+
+.plan-choice select { width: 100%; }
+
+.plan-upload-action {
+    min-height: 36px;
+    font-size: 14px;
+}
 
 .file-controls select {
     min-height: 42px;

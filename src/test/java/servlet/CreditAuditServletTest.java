@@ -12,11 +12,33 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CreditAuditServletTest {
 
     private final ScoreArchiveParser parser = new ScoreArchiveParser(new CreditAuditService());
+
+    @Test
+    void userUploadedPlanMustNotBeReplacedByStoredPlan() {
+        assertFalse(CreditAuditServlet.mayReuseStoredPlan("upload"));
+    }
+
+    @Test
+    void libraryAndLegacyRequestsMayReuseStoredPlan() {
+        assertTrue(CreditAuditServlet.mayReuseStoredPlan("library"));
+        assertTrue(CreditAuditServlet.mayReuseStoredPlan(""));
+    }
+
+    @Test
+    void multipartFailureLogDoesNotExposeExceptionMessage() {
+        var error = new javax.servlet.ServletException("包含用户文件名的内部错误",
+                new IllegalArgumentException("不应写入日志"));
+
+        assertEquals("ServletException <- IllegalArgumentException",
+                CreditAuditServlet.multipartFailureType(error));
+    }
 
     @Test
     void parsesWindowsChineseZipEntryNames() throws Exception {

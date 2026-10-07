@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# 仅更新毕业进度小管家，不修改简历网站、Nginx、证书或系统运行时。
+# 仅更新毕业进度小管家及其独立 Tomcat 配置，不修改简历网站、Nginx、证书或系统运行时。
 
 APP_NAME="biyejindu"
 APP_PORT="4180"
@@ -10,6 +10,7 @@ RESUME_PORT="4174"
 PACKAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WAR_SOURCE="${PACKAGE_DIR}/student_system.war"
 WAR_TARGET="/var/lib/${APP_NAME}/tomcat/webapps/ROOT.war"
+SERVER_XML="/var/lib/${APP_NAME}/tomcat/conf/server.xml"
 ENV_FILE="/etc/${APP_NAME}/${APP_NAME}.env"
 BACKUP_ROOT="/var/backups/${APP_NAME}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -25,6 +26,7 @@ fi
 
 [[ -f "${WAR_SOURCE}" ]] || die "未找到 ${WAR_SOURCE}。"
 [[ -f "${WAR_TARGET}" ]] || die "尚未完成首次部署，缺少 ${WAR_TARGET}。"
+[[ -f "${SERVER_XML}" ]] || die "缺少毕业进度服务配置 ${SERVER_XML}。"
 command -v jar >/dev/null 2>&1 || die "未找到 jar 工具，请确认 Java 21 已安装。"
 command -v curl >/dev/null 2>&1 || die "未找到 curl。"
 command -v openssl >/dev/null 2>&1 || die "未找到 OpenSSL。"
@@ -57,8 +59,19 @@ jar tf "${WAR_SOURCE}" | grep -q '^WEB-INF/classes/servlet/CreditAuditServlet.cl
 log "备份当前毕业进度版本"
 install -d -m 0700 "${BACKUP_DIR}"
 cp -a "${WAR_TARGET}" "${BACKUP_DIR}/ROOT.war"
+cp -a "${SERVER_XML}" "${BACKUP_DIR}/server.xml"
 sha256sum "${WAR_SOURCE}" > "${BACKUP_DIR}/new-war.sha256"
 sha256sum "${WAR_TARGET}" > "${BACKUP_DIR}/previous-war.sha256"
+
+log "修正毕业进度服务的上传字段上限"
+if grep -q 'maxPartCount="4"' "${SERVER_XML}"; then
+  sed 's/maxPartCount="4"/maxPartCount="8"/' "${SERVER_XML}" > "${SERVER_XML}.next"
+  grep -q 'maxPartCount="8"' "${SERVER_XML}.next" || die "Tomcat 上传字段配置生成失败。"
+  install -o root -g "${APP_NAME}" -m 0640 "${SERVER_XML}.next" "${SERVER_XML}"
+  rm -f "${SERVER_XML}.next"
+elif ! grep -q 'maxPartCount="8"' "${SERVER_XML}"; then
+  die "Tomcat maxPartCount 不是预期的 4 或 8，为避免覆盖人工配置，更新已停止。"
+fi
 
 log "原子替换应用包，只重启毕业进度服务"
 install -o root -g "${APP_NAME}" -m 0640 "${WAR_SOURCE}" "${WAR_TARGET}.next"
@@ -79,6 +92,7 @@ if [[ "${ready}" -ne 1 ]]; then
   log "新版本健康检查失败，自动恢复旧版本"
   install -o root -g "${APP_NAME}" -m 0640 "${BACKUP_DIR}/ROOT.war" "${WAR_TARGET}.rollback"
   mv -f "${WAR_TARGET}.rollback" "${WAR_TARGET}"
+  install -o root -g "${APP_NAME}" -m 0640 "${BACKUP_DIR}/server.xml" "${SERVER_XML}"
   systemctl restart "${APP_NAME}.service"
   for _ in $(seq 1 30); do
     if curl --fail --silent --show-error --max-time 3 \
@@ -100,4 +114,5 @@ curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:${RESUME_PORT}/
 printf '\n更新成功。\n'
 printf '本次只重启了：%s.service\n' "${APP_NAME}"
 printf '旧版本备份：%s/ROOT.war\n' "${BACKUP_DIR}"
+printf '旧版 Tomcat 配置备份：%s/server.xml\n' "${BACKUP_DIR}"
 printf '简历网站服务：未重启、未改配置、健康检查通过\n'

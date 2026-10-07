@@ -3,7 +3,7 @@
     const planExtensions = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'html', 'htm', 'csv', 'txt']);
     const scoreExtensions = new Set([...planExtensions, 'zip']);
     const maxBytes = 8 * 1024 * 1024;
-    const state = {planFile: null, scoreFile: null, planHash: '', planId: '', plan: null, availablePlans: [], modules: [], courses: [], aiVerification: null, lastResult: null, resultActivated: false, editRevision: 0, resultRevision: -1, calculationCount: 0};
+    const state = {planFile: null, scoreFile: null, planHash: '', planId: '', planSource: '', plan: null, availablePlans: [], modules: [], courses: [], aiVerification: null, lastResult: null, resultActivated: false, editRevision: 0, resultRevision: -1, calculationCount: 0};
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
     const elements = {
@@ -12,7 +12,7 @@
         moduleRows: $('#moduleRows'), courseRows: $('#courseRows'), warnings: $('#parseWarnings'),
         courseCount: $('#courseCount'), calculate: $('#calculateButton'), toast: $('#toast'), privacy: $('#privacyDialog'),
         school: $('#schoolInput'), major: $('#majorInput'), cohort: $('#cohortInput'), cache: $('#cacheState'),
-        planLibrary: $('#planLibrary'), feedback: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'),
+        planLibrary: $('#planLibrary'), choosePlanFile: $('#choosePlanFileButton'), feedback: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'),
         resultFreshness: $('#resultFreshness'), aiReviewFreshness: $('#aiReviewFreshness')
     };
     let toastTimer;
@@ -46,10 +46,13 @@
         card.classList.add('has-file');
         if (isPlan) {
             elements.planLibrary.value = '';
-            state.planId = ''; state.plan = null;
+            state.planId = ''; state.planSource = 'upload'; state.plan = null;
+            elements.choosePlanFile.textContent = '重新选择培养方案';
             elements.cache.className = 'cache-state'; elements.cache.textContent = '正在生成文件指纹…';
             try {
-                state.planHash = await sha256(file);
+                const hash = await sha256(file);
+                if (state.planFile !== file) return;
+                state.planHash = hash;
                 await checkPlanCache();
             } catch (_) {
                 state.planHash = ''; elements.cache.textContent = '无法校验方案版本，请重新选择文件';
@@ -59,7 +62,9 @@
     }
     function updateParseButton() {
         const identity = elements.school.value.trim() && elements.major.value.trim() && /^20\d{2}$/.test(elements.cohort.value.trim());
-        const hasPlan = Boolean(state.planId || (state.planFile && state.planHash));
+        const hasPlan = state.planSource === 'library'
+            ? Boolean(state.planId)
+            : Boolean(state.planSource === 'upload' && state.planFile && state.planHash);
         elements.parse.disabled = !(hasPlan && state.scoreFile && identity && elements.consent.checked);
     }
     async function sha256(file) {
@@ -68,6 +73,7 @@
         return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
     }
     async function checkPlanCache() {
+        if (state.planSource !== 'upload') { updateParseButton(); return; }
         state.planId = ''; state.plan = null;
         if (!state.planHash || !elements.school.value.trim() || !elements.major.value.trim() || !/^20\d{2}$/.test(elements.cohort.value.trim())) {
             elements.cache.className = 'cache-state'; elements.cache.textContent = '';
@@ -81,8 +87,8 @@
             if (!response.ok || !payload || payload.code !== 200) throw new Error(payload?.msg || '方案库查询失败');
             const result = payload.data;
             if (result.found && result.skipUpload && result.plan) {
-                state.planId = result.plan.id; state.plan = result.plan;
-                elements.cache.className = 'cache-state is-hit'; elements.cache.textContent = `✓ ${result.message}`;
+                elements.cache.className = 'cache-state is-hit';
+                elements.cache.textContent = '服务器已有相同版本；仍将按你上传的文件重新解析';
             } else {
                 elements.cache.className = 'cache-state is-miss'; elements.cache.textContent = result.message || '需要上传当前方案';
             }
@@ -110,7 +116,22 @@
     });
 
     elements.consent.addEventListener('change', updateParseButton);
-    [elements.school, elements.major, elements.cohort].forEach(field => field.addEventListener('change', () => { checkPlanCache(); updateParseButton(); }));
+    [elements.school, elements.major, elements.cohort].forEach(field => field.addEventListener('change', () => {
+        if (state.planSource === 'upload') checkPlanCache();
+        if (state.planSource === 'library' && state.plan) {
+            const changed = elements.school.value.trim() !== state.plan.school
+                || elements.major.value.trim() !== state.plan.major
+                || elements.cohort.value.trim() !== state.plan.cohort;
+            if (changed) {
+                state.planId = ''; state.planHash = ''; state.planSource = ''; state.plan = null;
+                elements.planLibrary.value = '';
+                elements.planState.textContent = '信息已变化，请重新选择或上传培养方案';
+                elements.cache.className = 'cache-state is-miss'; elements.cache.textContent = '';
+                $('[data-upload="plan"]').classList.remove('has-file');
+            }
+        }
+        updateParseButton();
+    }));
     async function loadPlanLibrary() {
         try {
             const response = await fetch('api/credit-audit/plans', {credentials: 'same-origin'});
@@ -127,16 +148,23 @@
             state.availablePlans = [];
         }
     }
+    elements.choosePlanFile.addEventListener('click', event => {
+        event.stopPropagation();
+        elements.planInput.value = '';
+        elements.planInput.click();
+    });
     elements.planLibrary.addEventListener('click', event => event.stopPropagation());
     elements.planLibrary.addEventListener('change', () => {
         const plan = state.availablePlans.find(item => item.id === elements.planLibrary.value);
         if (!plan) {
             state.planId = ''; state.plan = null;
-            elements.planState.textContent = state.planFile ? `✓ ${state.planFile.name} · ${formatSize(state.planFile.size)}` : '上传新方案';
+            state.planSource = state.planFile ? 'upload' : '';
+            elements.planState.textContent = state.planFile ? `✓ ${state.planFile.name} · ${formatSize(state.planFile.size)}` : '请选择已有方案，或上传自己的方案';
             updateParseButton(); return;
         }
-        state.planFile = null; state.planId = plan.id; state.planHash = plan.sha256; state.plan = plan;
+        state.planFile = null; state.planId = plan.id; state.planHash = plan.sha256; state.planSource = 'library'; state.plan = plan;
         elements.planInput.value = '';
+        elements.choosePlanFile.textContent = '上传自己的培养方案';
         elements.school.value = plan.school; elements.major.value = plan.major; elements.cohort.value = plan.cohort;
         elements.planState.textContent = `✓ 已选择：${plan.sourceName}`;
         elements.cache.className = 'cache-state is-hit'; elements.cache.textContent = '无需重复上传培养方案';
@@ -148,7 +176,11 @@
         const form = new FormData();
         form.append('school', elements.school.value.trim()); form.append('major', elements.major.value.trim()); form.append('cohort', elements.cohort.value.trim());
         form.append('planHash', state.planHash); form.append('scoreFile', state.scoreFile);
-        if (state.planId) form.append('planId', state.planId); else form.append('planFile', state.planFile);
+        if (state.planSource === 'library') {
+            form.append('planMode', 'library'); form.append('planId', state.planId);
+        } else {
+            form.append('planMode', 'upload'); form.append('planFile', state.planFile);
+        }
         elements.parse.disabled = true; elements.parse.querySelector('span').textContent = '正在解析并 AI 核对…';
         try {
             const response = await fetch('api/credit-audit/parse', {

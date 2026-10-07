@@ -47,7 +47,7 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
     private static final Duration RATE_WINDOW = Duration.ofMinutes(10);
     private static final Duration DAILY_RATE_WINDOW = Duration.ofDays(1);
     private static final Set<String> MULTIPART_FIELDS = Set.of(
-            "school", "major", "cohort", "planHash", "planId", "planFile", "scoreFile");
+            "school", "major", "cohort", "planHash", "planId", "planMode", "planFile", "scoreFile");
     private static final ThreadPoolExecutor PARSERS = new ThreadPoolExecutor(
             2, 2, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<>(12),
             runnable -> {
@@ -98,7 +98,7 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
 
         Future<AuditResponse> future = null;
         try {
-            validateMultipart(req, MULTIPART_FIELDS, 7);
+            validateMultipart(req, MULTIPART_FIELDS, 8);
             Part scorePart = req.getPart("scoreFile");
             if (scorePart == null || scorePart.getSize() <= 0) {
                 OPERATIONS.recordAuditFailure(visitor);
@@ -108,12 +108,20 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
             String scoreName = safeSubmittedName(scorePart);
             byte[] scoreBytes = readBounded(scorePart);
             String planId = clean(req.getParameter("planId"), 80);
+            String planMode = clean(req.getParameter("planMode"), 20);
             String planHash = clean(req.getParameter("planHash"), 64);
             String school = clean(req.getParameter("school"), 60);
             String major = clean(req.getParameter("major"), 80);
             String cohort = clean(req.getParameter("cohort"), 20);
 
-            CreditPlanRegistryService.PlanRecord cachedPlan = planId.isBlank() ? null : PLANS.findById(planId);
+            if (!planMode.isBlank() && !planMode.equals("library") && !planMode.equals("upload")) {
+                OPERATIONS.recordAuditFailure(visitor);
+                write(resp, 400, Result.fail(400, "培养方案来源不合法"));
+                return;
+            }
+            boolean userUploadedPlan = !mayReuseStoredPlan(planMode);
+            CreditPlanRegistryService.PlanRecord cachedPlan = userUploadedPlan || planId.isBlank()
+                    ? null : PLANS.findById(planId);
             byte[] planBytes = null;
             String planName = null;
             if (cachedPlan != null) {
@@ -143,7 +151,7 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
             String finalPlanName = planName;
             CreditPlanRegistryService.PlanRecord finalCachedPlan = cachedPlan;
             future = PARSERS.submit(() -> parse(finalCachedPlan, finalPlanBytes, finalPlanName,
-                    planHash, school, major, cohort, scoreBytes, scoreName));
+                    planHash, school, major, cohort, scoreBytes, scoreName, userUploadedPlan));
             AuditResponse result = future.get(110, TimeUnit.SECONDS);
             OPERATIONS.recordAuditSuccess(visitor, result.planReused(), result.courses().size());
             write(resp, 200, Result.success(result));
@@ -169,10 +177,14 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
             Thread.currentThread().interrupt();
             OPERATIONS.recordAuditFailure(visitor);
             write(resp, 503, Result.fail(503, "服务暂时中断，请重试"));
-        } catch (IllegalStateException | ServletException err) {
-            log.warn("毕业学分自查文件超过上传限制");
+        } catch (IllegalStateException err) {
+            log.warn("毕业学分自查请求超过 Servlet 上传大小限制");
             OPERATIONS.recordAuditFailure(visitor);
-            write(resp, 413, Result.fail(413, "单个文件不能超过 8MB"));
+            write(resp, 413, Result.fail(413, "上传内容超过安全限制：单个文件最大 8MB，两个文件合计最大 17MB"));
+        } catch (ServletException err) {
+            log.warn("毕业学分自查 multipart 请求无法解析：{}", multipartFailureType(err));
+            OPERATIONS.recordAuditFailure(visitor);
+            write(resp, 400, Result.fail(400, "上传请求格式不正确，请刷新页面后重新选择文件"));
         } catch (IOException err) {
             log.info("毕业学分自查文件解析失败：{}", err.getMessage());
             OPERATIONS.recordAuditFailure(visitor);
@@ -186,13 +198,13 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
 
     private AuditResponse parse(CreditPlanRegistryService.PlanRecord cachedPlan, byte[] planBytes, String planName,
                                 String planHash, String school, String major, String cohort,
-                                byte[] scoreBytes, String scoreName) throws IOException {
+                                byte[] scoreBytes, String scoreName, boolean userUploadedPlan) throws IOException {
         List<String> warnings = new ArrayList<>();
         CreditPlanRegistryService.PlanRecord plan = cachedPlan;
         boolean reused = plan != null;
         if (plan == null) {
-            var known = PLANS.check(school, major, cohort, planHash);
-            if (known.found() && known.plan() != null) {
+            var known = userUploadedPlan ? null : PLANS.check(school, major, cohort, planHash);
+            if (known != null && known.found() && known.plan() != null) {
                 plan = known.plan();
                 reused = true;
             } else {
@@ -221,6 +233,21 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
         warnings.addAll(scoreWarnings);
         DeepSeekClient.AiReview aiReview = AI_VERIFICATION.verify(plan, scoreCourses, warnings);
         return new AuditResponse(plan, plan.modules(), scoreCourses, warnings, scoreName, reused, aiReview);
+    }
+
+    static boolean mayReuseStoredPlan(String planMode) {
+        return !"upload".equals(planMode);
+    }
+
+    static String multipartFailureType(Throwable error) {
+        Throwable current = error;
+        StringBuilder result = new StringBuilder();
+        while (current != null && result.length() < 160) {
+            if (result.length() > 0) result.append(" <- ");
+            result.append(current.getClass().getSimpleName());
+            current = current.getCause();
+        }
+        return result.toString();
     }
 
     private boolean allow(String key, int limit) {

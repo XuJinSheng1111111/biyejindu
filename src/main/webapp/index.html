@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-store">
     <title>毕业进度小管家｜毕业学分自查</title>
     <meta name="description" content="一页完成培养方案与成绩文件上传、课程核对和毕业学分进度自查。">
-    <link rel="stylesheet" href="static/css/credit-audit.css?v=20261007-recalc-2">
+    <link rel="stylesheet" href="static/css/credit-audit.css?v=20261007-plan-upload-1">
 </head>
 <body>
 <a class="skip-link" href="#audit">跳到学分自查</a>
@@ -47,16 +47,17 @@
             </div>
 
             <div class="file-list">
-                <article class="file-row plan-row" data-upload="plan" tabindex="0" role="button" aria-label="选择人才培养方案">
+                <article class="file-row plan-row" data-upload="plan">
                     <input id="planFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt" aria-describedby="planFileHint" hidden>
                     <div class="file-title">
                         <h3>人才培养方案</h3>
                     </div>
                     <div class="file-controls">
                         <div class="plan-choice">
-                            <select id="planLibrary" aria-label="选择服务器已有的人才培养方案"><option value="">从方案库选择</option></select>
+                            <select id="planLibrary" aria-label="选择服务器已有的人才培养方案"><option value="">选择服务器已有方案（可选）</option></select>
+                            <button class="text-action plan-upload-action" id="choosePlanFileButton" type="button">上传自己的培养方案</button>
                         </div>
-                        <span class="file-state" id="planState">或点击上传新方案</span>
+                        <span class="file-state" id="planState">请选择已有方案，或上传自己的方案</span>
                         <span class="file-hint" id="planFileHint">PDF、DOC/DOCX、XLS/XLSX、HTML、CSV、TXT，最大 8 MB</span>
                         <span class="cache-state" id="cacheState"></span>
                     </div>
@@ -153,7 +154,7 @@
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="static/js/credit-audit-calculator.js?v=20261007-recalc-2" defer></script>
-<script src="static/js/credit-audit.js?v=20261007-recalc-2" defer></script>
+<script src="static/js/credit-audit-calculator.js?v=20261007-plan-upload-1" defer></script>
+<script src="static/js/credit-audit.js?v=20261007-plan-upload-1" defer></script>
 </body>
 </html>

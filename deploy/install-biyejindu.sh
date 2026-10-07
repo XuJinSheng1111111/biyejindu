@@ -134,7 +134,7 @@ cat > "${CATALINA_BASE}/conf/server.xml" <<'SERVERXML'
                connectionTimeout="10000" keepAliveTimeout="10000"
                maxThreads="32" minSpareThreads="4" acceptCount="20" maxConnections="64"
                maxPostSize="18874368" maxSavePostSize="4096" maxSwallowSize="18874368"
-               maxParameterCount="40" maxPartCount="4"
+               maxParameterCount="40" maxPartCount="8"
                allowTrace="false" xpoweredBy="false" server="web" />
     <Engine name="Catalina" defaultHost="localhost">
       <Host name="localhost" appBase="webapps" unpackWARs="false"
