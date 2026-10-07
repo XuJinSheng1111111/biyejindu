@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-store">
     <title>毕业进度小管家｜毕业学分自查</title>
     <meta name="description" content="一页完成培养方案与成绩文件上传、课程核对和毕业学分进度自查。">
-    <link rel="stylesheet" href="static/css/credit-audit.css?v=20261006-security-1">
+    <link rel="stylesheet" href="static/css/credit-audit.css?v=20261007-recalc-2">
 </head>
 <body>
 <a class="skip-link" href="#audit">跳到学分自查</a>
@@ -57,26 +57,25 @@
                             <select id="planLibrary" aria-label="选择服务器已有的人才培养方案"><option value="">从方案库选择</option></select>
                         </div>
                         <span class="file-state" id="planState">或点击上传新方案</span>
-                        <span class="file-hint" id="planFileHint">PDF · Word · Excel · HTML · CSV · TXT · 不超过 8 MB</span>
+                        <span class="file-hint" id="planFileHint">PDF、DOC/DOCX、XLS/XLSX、HTML、CSV、TXT，最大 8 MB</span>
                         <span class="cache-state" id="cacheState"></span>
                     </div>
                 </article>
 
                 <article class="file-row score-row" data-upload="score" tabindex="0" role="button" aria-label="选择个人成绩文件">
-                    <input id="scoreFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt,.zip,application/zip" aria-describedby="scoreFileHint scorePageHelp" hidden>
+                    <input id="scoreFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,.csv,.txt,.zip,application/zip" aria-describedby="scoreFileHint" hidden>
                     <div class="file-title">
                         <h3>个人成绩文件</h3>
                     </div>
                     <div class="file-controls score-controls">
-                        <span class="file-state" id="scoreState">点击选择成绩文件或网页压缩包</span>
-                        <span class="file-hint" id="scoreFileHint">文档 · 网页 · ZIP · 不超过 8 MB</span>
-                        <span class="file-help" id="scorePageHelp">网页成绩单请将 HTML 与同名资源文件夹一起压缩为 ZIP 后上传</span>
+                        <span class="file-state" id="scoreState">点击选择成绩文件</span>
+                        <span class="file-hint" id="scoreFileHint">PDF、DOC/DOCX、XLS/XLSX、HTML、CSV、TXT、ZIP，最大 8 MB</span>
                     </div>
                 </article>
             </div>
 
             <div class="section-actions">
-                <button class="main-action" id="parseButton" type="button" disabled><span>解析并核对</span></button>
+                <button class="main-action" id="parseButton" type="button" disabled><span>解析并 AI 二次核对</span></button>
                 <label class="consent-line"><input id="privacyConsent" type="checkbox"><span>我已阅读并同意<a href="#" data-open-privacy>文件处理与隐私说明</a></span></label>
             </div>
         </section>
@@ -86,6 +85,13 @@
                 <div><h2 id="review-title">核对识别结果</h2></div>
             </header>
             <div id="parseWarnings" class="is-hidden" aria-live="polite"></div>
+
+            <section class="ai-review" id="aiReview" aria-labelledby="ai-review-title">
+                <header><h3 id="ai-review-title">DeepSeek 核对意见</h3></header>
+                <p class="ai-review-freshness is-hidden" id="aiReviewFreshness" role="status"></p>
+                <p id="aiReviewSummary"></p>
+                <ul id="aiReviewIssues"></ul>
+            </section>
 
             <section class="data-section" aria-labelledby="module-heading">
                 <header><div><h3 id="module-heading">培养方案板块</h3></div></header>
@@ -104,33 +110,33 @@
 
         <section class="glass-section is-hidden" id="result" aria-labelledby="result-title">
             <header class="section-heading compact">
-                <div><h2 id="result-title">毕业学分进度</h2></div>
+                <div><h2 id="result-title">毕业学分进度</h2><p class="result-freshness is-hidden" id="resultFreshness" role="status"></p></div>
             </header>
             <div class="result-summary">
                 <div class="progress-ring" id="progressRing"><div><strong id="progressPercent">0%</strong><span>总进度</span></div></div>
                 <div class="summary-copy"><span class="result-state" id="resultBadge">核验完成</span><h3 id="resultHeadline">还需补足 0 学分</h3>
-                    <dl class="summary-numbers"><div><dt>要求</dt><dd><strong id="requiredTotal">0</strong> 学分</dd></div><div><dt>已计入</dt><dd><strong id="earnedTotal">0</strong> 学分</dd></div><div><dt>待补</dt><dd><strong id="missingTotal">0</strong> 学分</dd></div></dl>
+                    <dl class="summary-numbers"><div><dt>总学分要求</dt><dd><strong id="requiredTotal">0</strong> 学分</dd></div><div><dt>计入总学分</dt><dd><strong id="earnedTotal">0</strong> 学分</dd></div><div><dt>总学分待补</dt><dd><strong id="missingTotal">0</strong> 学分</dd></div></dl>
                 </div>
             </div>
             <div class="result-columns">
-                <section><header class="list-heading"><h3>板块明细</h3><span>超出板块要求的学分不跨板块抵扣</span></header><div class="module-results" id="moduleResults"></div></section>
+                <section><header class="list-heading"><h3>板块明细</h3><span>超出板块要求的学分不跨板块抵扣</span></header><div class="module-results" id="moduleResults"></div>
+                    <header class="list-heading completion-heading"><h3>另行完成要求</h3><span>按培养方案单独核对是否计入总学分</span></header><div class="completion-results" id="completionResults"></div>
+                </section>
                 <aside class="attention-note"><h3>优先关注</h3><ul id="attentionList"></ul></aside>
             </div>
             <div class="result-actions"><button class="inline-action" id="downloadButton" type="button">下载核验清单</button><button class="inline-action" id="restartButton" type="button">重新核验</button></div>
-            <p class="result-disclaimer">结果依据上传确认的数据计算，最终结果请以学校最终审核为准</p>
         </section>
     </main>
 
     <footer class="site-footer" id="privacy-info">
         <div><strong>毕业<span>进度</span>小管家</strong></div>
-        <p>毕业要求以所在学校最新人才培养方案和教务部门审核为准。</p>
         <button class="footer-action" id="feedbackButton" type="button">问题反馈</button>
     </footer>
 </div>
 
 <dialog id="privacyDialog" aria-labelledby="privacyTitle">
     <div class="dialog-head"><h2 id="privacyTitle">文件处理与隐私说明</h2><button type="button" data-close-privacy aria-label="关闭">×</button></div>
-    <div class="dialog-body"><p>为生成本次学分自查结果，系统会读取你主动选择的人才培养方案、课程名称、成绩、学分和课程类别。</p><ul><li>无需注册，不收集账号密码。</li><li>个人成绩原文件仅在本次请求的服务器内存中解析，不写入数据库或上传目录。</li><li>培养方案先用文件指纹查询；服务器已有相同版本时不上传。新版本只保存结构化规则和文件指纹，原文件不保存。</li><li>所有核验均由本服务器的本地规则完成，不会把成绩或培养方案发送给第三方人工智能接口。</li><li>暂不支持成绩截图，请上传文档、网页文件或网页压缩包。</li><li>结果须由你核对，并以学校审核为准。</li></ul></div>
+    <div class="dialog-body"><ol><li>无需注册账号，不收集账号密码等个人信息</li><li>系统仅读取用户主动提交的人才培养方案、课程名称、成绩、学分及课程类别相关内容</li><li>仅将脱敏后的学业数据及培养方案要求发送至 DeepSeek 进行二次核对</li><li>AI 仅提供学分一致性核对参考，最终学分认定与毕业资格以学校教务部门官方审核结论为准</li></ol></div>
     <div class="dialog-actions"><button class="main-action" type="button" data-close-privacy>我知道了</button></div>
 </dialog>
 
@@ -147,6 +153,7 @@
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="static/js/credit-audit.js?v=20261006-security-1" defer></script>
+<script src="static/js/credit-audit-calculator.js?v=20261007-recalc-2" defer></script>
+<script src="static/js/credit-audit.js?v=20261007-recalc-2" defer></script>
 </body>
 </html>

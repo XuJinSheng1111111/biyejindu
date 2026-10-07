@@ -82,8 +82,8 @@ public class CreditPlanAdminUploadServlet extends CreditAuditApiServlet {
             String hash = PLANS.sha256(bytes);
             String canonicalName = PLANS.canonicalSourceName(school, major, cohort, originalName);
             var plan = replacePlanId.isBlank()
-                    ? PLANS.saveProvisional(school, major, cohort, hash, canonicalName, extraction.modules())
-                    : PLANS.replace(replacePlanId, school, major, cohort, hash, canonicalName, extraction.modules());
+                    ? PLANS.saveProvisional(school, major, cohort, hash, canonicalName, extraction)
+                    : PLANS.replace(replacePlanId, school, major, cohort, hash, canonicalName, extraction);
             write(response, 200, Result.success(plan));
         } catch (IllegalStateException | ServletException error) {
             write(response, 413, Result.fail(413, "文件不能超过 8MB"));

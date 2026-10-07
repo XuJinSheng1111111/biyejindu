@@ -100,6 +100,14 @@ log "创建最小权限运行账号和持久化目录"
 if ! id "${APP_NAME}" >/dev/null 2>&1; then
   useradd --system --home-dir "/var/lib/${APP_NAME}" --shell /sbin/nologin "${APP_NAME}"
 fi
+
+# Tomcat runtime 由 root 管理，但运行用户必须能够遍历目录、读取 JAR 并执行 shell 脚本。
+# 不使用 0777；只授予 biyejindu 组运行所需的最小权限。
+chown -R root:"${APP_NAME}" "${TOMCAT_HOME}"
+find "${TOMCAT_HOME}" -type d -exec chmod 0750 {} +
+find "${TOMCAT_HOME}" -type f -exec chmod 0640 {} +
+find "${TOMCAT_HOME}/bin" -type f -name '*.sh' -exec chmod 0750 {} +
+
 install -d -o root -g "${APP_NAME}" -m 0750 "${CONFIG_DIR}"
 install -d -o "${APP_NAME}" -g "${APP_NAME}" -m 0750 \
   "${DATA_DIR}" "${CATALINA_BASE}/logs" "${CATALINA_BASE}/temp" "${CATALINA_BASE}/work"
@@ -109,6 +117,10 @@ cp -a "${TOMCAT_HOME}/conf/." "${CATALINA_BASE}/conf/"
 find "${CATALINA_BASE}/conf" -type d -exec chmod 0750 {} +
 find "${CATALINA_BASE}/conf" -type f -exec chmod 0640 {} +
 chown -R root:"${APP_NAME}" "${CATALINA_BASE}/conf"
+
+# HostConfig 启动时需要该目录存在；只开放这一处运行时写权限。
+install -d -o root -g "${APP_NAME}" -m 0750 "${CATALINA_BASE}/conf/Catalina"
+install -d -o "${APP_NAME}" -g "${APP_NAME}" -m 0750 "${CATALINA_BASE}/conf/Catalina/localhost"
 
 cat > "${CATALINA_BASE}/conf/server.xml" <<'SERVERXML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -146,12 +158,22 @@ chown root:"${APP_NAME}" "${CATALINA_BASE}/conf/server.xml"
 log "配置运行密钥与 Java 内存边界"
 if [[ ! -f "${ENV_FILE}" ]]; then
   admin_key="$(openssl rand -hex 32)"
+  settings_key="$(openssl rand -base64 48 | tr -d '\n')"
   cat > "${ENV_FILE}" <<ENVFILE
 JAVA_HOME=${JAVA_HOME}
 CREDIT_AUDIT_ADMIN_KEY=${admin_key}
 CREDIT_AUDIT_DATA_DIR=${DATA_DIR}
+CREDIT_AUDIT_SETTINGS_KEY=${settings_key}
+DEEPSEEK_API_KEY=
 JAVA_OPTS="-Xms128m -Xmx512m -XX:MaxMetaspaceSize=192m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djava.io.tmpdir=${CATALINA_BASE}/temp"
 ENVFILE
+fi
+if ! grep -q '^CREDIT_AUDIT_SETTINGS_KEY=' "${ENV_FILE}"; then
+  settings_key="$(openssl rand -base64 48 | tr -d '\n')"
+  printf '\nCREDIT_AUDIT_SETTINGS_KEY=%s\n' "${settings_key}" >> "${ENV_FILE}"
+fi
+if ! grep -q '^DEEPSEEK_API_KEY=' "${ENV_FILE}"; then
+  printf 'DEEPSEEK_API_KEY=\n' >> "${ENV_FILE}"
 fi
 chmod 0640 "${ENV_FILE}"
 chown root:"${APP_NAME}" "${ENV_FILE}"
@@ -173,8 +195,8 @@ UMask=0027
 Environment=CATALINA_HOME=${TOMCAT_LINK}
 Environment=CATALINA_BASE=${CATALINA_BASE}
 EnvironmentFile=${ENV_FILE}
+WorkingDirectory=${CATALINA_BASE}
 ExecStart=${TOMCAT_LINK}/bin/catalina.sh run
-ExecStop=${TOMCAT_LINK}/bin/catalina.sh stop 20 -force
 Restart=on-failure
 RestartSec=5s
 TimeoutStartSec=90s
@@ -249,7 +271,8 @@ systemctl reload nginx
 log "检查域名解析并申请独立 HTTPS 证书"
 getent ahostsv4 "${DOMAIN}" | grep -q . || die "域名尚未解析。请先添加 ${DOMAIN} 的 A 记录，再重新运行本脚本。"
 certbot certonly --webroot -w "${LE_WEBROOT}" -d "${DOMAIN}" \
-  --non-interactive --agree-tos --register-unsafely-without-email --keep-until-expiring
+  --non-interactive --agree-tos --register-unsafely-without-email --keep-until-expiring \
+  --deploy-hook "nginx -t >/dev/null 2>&1 && systemctl reload nginx"
 
 log "写入最终 HTTPS 反向代理和公网路由白名单"
 cat > "${NGINX_FILE}" <<NGINXFINAL
@@ -273,7 +296,8 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
+    # 不依赖 Certbot 某些安装方式才会生成的 options-ssl-nginx.conf。
+    ssl_protocols TLSv1.2 TLSv1.3;
 
     access_log /var/log/nginx/${APP_NAME}-access.log;
     error_log /var/log/nginx/${APP_NAME}-error.log warn;
@@ -299,7 +323,7 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
         proxy_connect_timeout 5s;
-        proxy_read_timeout 45s;
+        proxy_read_timeout 120s;
         proxy_send_timeout 45s;
     }
 
@@ -381,6 +405,6 @@ admin_key="$(sed -n 's/^CREDIT_AUDIT_ADMIN_KEY=//p' "${ENV_FILE}")"
 printf '\n部署成功。\n'
 printf '前端地址：https://%s/\n' "${DOMAIN}"
 printf '后台地址：https://%s/credit-admin.html\n' "${DOMAIN}"
-printf '后台管理密钥：%s\n' "${admin_key}"
+printf '后台初始密码：%s\n' "${admin_key}"
 printf '回滚备份：%s\n' "${BACKUP_DIR}"
-printf '请立即把管理密钥保存到密码管理器，不要发送到聊天或公开文件。\n'
+printf '请立即登录后台修改初始密码，并把新密码保存到密码管理器。\n'

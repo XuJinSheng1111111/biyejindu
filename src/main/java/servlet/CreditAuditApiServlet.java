@@ -2,7 +2,7 @@ package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import pojo.Result;
-import util.AuthConfig;
+import service.AdminCredentialService;
 import util.SecurityUtil;
 
 import javax.servlet.http.HttpServlet;
@@ -57,9 +57,9 @@ public abstract class CreditAuditApiServlet extends HttpServlet {
     }
 
     protected final boolean authorized(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String configured = AuthConfig.get("CREDIT_AUDIT_ADMIN_KEY", "");
-        if (configured.length() < 24) {
-            write(response, 503, Result.fail(503, "运营后台尚未配置安全密钥"));
+        AdminCredentialService credentials = AdminCredentialService.getInstance();
+        if (!credentials.configured()) {
+            write(response, 503, Result.fail(503, "运营后台尚未配置初始密码"));
             return false;
         }
         String rateKey = "credit-admin-auth:" + SecurityUtil.sha256(clientAddress(request));
@@ -67,9 +67,9 @@ public abstract class CreditAuditApiServlet extends HttpServlet {
             write(response, 429, Result.fail(429, "管理验证失败次数过多，请稍后再试"));
             return false;
         }
-        if (!SecurityUtil.constantTimeEquals(configured, request.getHeader("X-Credit-Admin-Key"))) {
+        if (!credentials.verify(request.getHeader("X-Credit-Admin-Key"))) {
             RequestRateLimiter.recordFailure(rateKey, ADMIN_FAILURE_WINDOW);
-            write(response, 401, Result.fail(401, "管理密钥不正确"));
+            write(response, 401, Result.fail(401, "后台密码不正确"));
             return false;
         }
         RequestRateLimiter.reset(rateKey);

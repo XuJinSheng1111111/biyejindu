@@ -3,7 +3,7 @@
     const planExtensions = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'html', 'htm', 'csv', 'txt']);
     const scoreExtensions = new Set([...planExtensions, 'zip']);
     const maxBytes = 8 * 1024 * 1024;
-    const state = {planFile: null, scoreFile: null, planHash: '', planId: '', plan: null, availablePlans: [], modules: [], courses: [], lastResult: null, resultActivated: false};
+    const state = {planFile: null, scoreFile: null, planHash: '', planId: '', plan: null, availablePlans: [], modules: [], courses: [], aiVerification: null, lastResult: null, resultActivated: false, editRevision: 0, resultRevision: -1, calculationCount: 0};
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
     const elements = {
@@ -12,10 +12,10 @@
         moduleRows: $('#moduleRows'), courseRows: $('#courseRows'), warnings: $('#parseWarnings'),
         courseCount: $('#courseCount'), calculate: $('#calculateButton'), toast: $('#toast'), privacy: $('#privacyDialog'),
         school: $('#schoolInput'), major: $('#majorInput'), cohort: $('#cohortInput'), cache: $('#cacheState'),
-        planLibrary: $('#planLibrary'), feedback: $('#feedbackDialog'), feedbackForm: $('#feedbackForm')
+        planLibrary: $('#planLibrary'), feedback: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'),
+        resultFreshness: $('#resultFreshness'), aiReviewFreshness: $('#aiReviewFreshness')
     };
     let toastTimer;
-    let liveResultTimer;
 
     function showToast(message) {
         elements.toast.textContent = message;
@@ -149,7 +149,7 @@
         form.append('school', elements.school.value.trim()); form.append('major', elements.major.value.trim()); form.append('cohort', elements.cohort.value.trim());
         form.append('planHash', state.planHash); form.append('scoreFile', state.scoreFile);
         if (state.planId) form.append('planId', state.planId); else form.append('planFile', state.planFile);
-        elements.parse.disabled = true; elements.parse.querySelector('span').textContent = '正在安全解析…';
+        elements.parse.disabled = true; elements.parse.querySelector('span').textContent = '正在解析并 AI 核对…';
         try {
             const response = await fetch('api/credit-audit/parse', {
                 method: 'POST', body: form, credentials: 'same-origin',
@@ -161,20 +161,17 @@
         } catch (error) {
             showToast(error.message || '解析失败，请稍后重试');
         } finally {
-            elements.parse.querySelector('span').textContent = '解析并核对'; updateParseButton();
+            elements.parse.querySelector('span').textContent = '解析并 AI 二次核对'; updateParseButton();
         }
     });
 
     function normalize(value) { return String(value || '').toLowerCase().replace(/[\s_—–\-：:（）()【】\[\]]/g, ''); }
     function categoryOptions() {
-        const known = new Set(['待归类', ...state.modules.map(module => module.name).filter(Boolean)]);
-        state.courses.map(course => course.category).filter(name => name && name !== '待归类').forEach(name => known.add(name));
-        return [...known];
+        if (window.CreditAuditCalculator?.categoryNames) return window.CreditAuditCalculator.categoryNames(state.modules);
+        return ['待归类', ...state.modules.map(module => module.name).filter(Boolean)];
     }
-    function parentCategory(category) { return category; }
     function matchCategory(category, courseName = '') {
         const value = normalize(category);
-        if (normalize(courseName).includes('劳动')) return state.modules.some(item => item.name === '劳动学分') ? '劳动学分' : '待归类';
         if (!value || value === '待归类') return '待归类';
         const aliases = [
             [/公共必修|通识必修/, '通识必修'], [/公共选修|通识选修/, '通识选修'],
@@ -192,26 +189,26 @@
     function loadExtraction(data) {
         state.lastResult = null;
         state.resultActivated = false;
-        clearTimeout(liveResultTimer);
+        state.editRevision = 0;
+        state.resultRevision = -1;
+        state.calculationCount = 0;
         elements.calculate.textContent = '生成学分结果';
+        elements.resultFreshness.classList.add('is-hidden');
+        elements.aiReviewFreshness.classList.add('is-hidden');
         state.plan = data.plan || state.plan;
         if (state.plan?.id) state.planId = state.plan.id;
         state.modules = (data.modules || []).map(item => ({name: item.name, requiredCredits: Number(item.requiredCredits) || 0,
             source: item.source || '', countsTowardTotal: item.status !== '不计入总学分'}));
-        const laborRule = state.plan?.completionRequirements?.find(item => normalize(item.courseName).includes('劳动'));
-        if (laborRule && !state.modules.some(item => item.name === '劳动学分')) {
-            state.modules.push({name: '劳动学分', requiredCredits: Number(laborRule.nominalCredits) || 2,
-                source: '人才培养方案', countsTowardTotal: false});
-        }
         state.courses = (data.courses || []).map(item => ({
             name: item.name, category: item.category || '待归类', rawCategory: item.category || '', credits: Number(item.credits) || 0,
             score: Number(item.score) || 0, passed: Boolean(item.passed), source: item.source || ''
         }));
         state.courses.forEach(item => { item.category = matchCategory(item.category, item.name); });
+        state.aiVerification = data.aiVerification || null;
         const warnings = [...(data.warnings || [])];
         if (data.planReused) warnings.unshift('已复用服务器中相同培养方案的规则，培养方案原文件未再次上传。');
         if (state.plan?.verified) warnings.unshift('当前培养方案规则已按所提供文件人工核对；个人成绩仍需逐项确认。');
-        renderWarnings(warnings); renderReview();
+        renderWarnings(warnings); renderAiReview(); renderReview();
         elements.review.classList.remove('is-hidden'); elements.result.classList.add('is-hidden');
         elements.review.scrollIntoView({behavior: 'smooth', block: 'start'});
     }
@@ -219,6 +216,30 @@
         elements.warnings.replaceChildren();
         warnings.forEach(message => {
             const paragraph = document.createElement('p'); paragraph.textContent = `请注意：${message}`; elements.warnings.append(paragraph);
+        });
+    }
+    function renderAiReview() {
+        const review = state.aiVerification;
+        if (!review?.completed) throw new Error('AI 二次核对未完成');
+        $('#aiReviewSummary').textContent = review.summary || 'AI 二次核对已完成。';
+        const list = $('#aiReviewIssues');
+        list.replaceChildren();
+        const issues = Array.isArray(review.issues) ? review.issues : [];
+        if (!issues.length) {
+            const item = document.createElement('li');
+            item.className = 'is-clear';
+            item.textContent = '未发现明显异常，仍请逐项确认下方识别结果。';
+            list.append(item);
+            return;
+        }
+        issues.forEach(issue => {
+            const item = document.createElement('li');
+            const title = document.createElement('strong');
+            title.textContent = `${issue.level || '需核对'}：${issue.title || '数据异常'}`;
+            const detail = document.createElement('span');
+            detail.textContent = issue.detail || '请人工核对该项。';
+            item.append(title, detail);
+            list.append(item);
         });
     }
     function input(type, value, label, options = {}) {
@@ -243,11 +264,11 @@
             const row = document.createElement('tr');
             const name = input('text', item.name, '板块名称');
             const credits = input('number', item.requiredCredits, '要求学分', {min: '0', max: '300', step: '0.5'});
-            name.addEventListener('input', event => { item.name = event.target.value; scheduleLiveResultUpdate(); });
-            name.addEventListener('change', () => { renderCourseCategoryOptions(); scheduleLiveResultUpdate(); });
-            credits.addEventListener('input', event => { item.requiredCredits = Number(event.target.value) || 0; scheduleLiveResultUpdate(); });
+            name.addEventListener('input', event => { item.name = event.target.value; markResultStale(); });
+            name.addEventListener('change', () => { renderCourseCategoryOptions(); markResultStale(); });
+            credits.addEventListener('input', event => { item.requiredCredits = Number(event.target.value) || 0; markResultStale(); });
             row.append(cell(name, '', '板块名称'), cell(credits, '', '要求学分'), cell(item.source || '手动添加', 'source-cell', '来源片段'),
-                cell(deleteButton(() => { state.modules.splice(index, 1); renderReview(); scheduleLiveResultUpdate(); }, `删除${item.name || '板块'}`), 'row-action', '操作'));
+                cell(deleteButton(() => { state.modules.splice(index, 1); renderReview(); markResultStale(); }, `删除${item.name || '板块'}`), 'row-action', '操作'));
             elements.moduleRows.append(row);
         });
         renderCourseRows();
@@ -257,14 +278,11 @@
         categoryOptions().forEach(name => {
             const option = document.createElement('option'); option.value = name; option.textContent = name; option.selected = name === item.category; select.append(option);
         });
-        const customOption = document.createElement('option'); customOption.value = '__custom__'; customOption.textContent = '＋ 自定义板块'; select.append(customOption);
         if (![...select.options].some(option => option.selected)) select.value = '待归类';
         select.addEventListener('change', event => {
-            if (event.target.value !== '__custom__') { item.category = event.target.value; scheduleLiveResultUpdate(); return; }
-            const custom = window.prompt('请输入自定义板块名称', '')?.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 40);
-            if (custom) item.category = custom;
-            renderCourseRows();
-            scheduleLiveResultUpdate();
+            item.category = event.target.value;
+            item.rawCategory = event.target.value;
+            markResultStale();
         }); return select;
     }
     function renderCourseRows() {
@@ -274,15 +292,22 @@
             const name = input('text', item.name, '课程名称');
             const credits = input('number', item.credits, '课程学分', {min: '0', max: '30', step: '0.5'});
             const score = input('number', item.score, '课程成绩', {min: '0', max: '100', step: '0.1'});
-            name.addEventListener('input', event => { item.name = event.target.value; scheduleLiveResultUpdate(); });
-            credits.addEventListener('input', event => { item.credits = Number(event.target.value) || 0; scheduleLiveResultUpdate(); });
-            score.addEventListener('input', event => { item.score = event.target.value === '' ? null : Number(event.target.value); scheduleLiveResultUpdate(); });
-            const passLabel = document.createElement('label'); passLabel.className = 'pass-check';
             const passed = input('checkbox', '', '课程已通过'); passed.checked = item.passed;
-            passed.addEventListener('change', event => { item.passed = event.target.checked; scheduleLiveResultUpdate(); });
+            name.addEventListener('input', event => { item.name = event.target.value; markResultStale(); });
+            credits.addEventListener('input', event => { item.credits = Number(event.target.value) || 0; markResultStale(); });
+            score.addEventListener('input', event => {
+                item.score = event.target.value === '' ? null : Number(event.target.value);
+                if (item.score !== null && Number.isFinite(item.score)) {
+                    item.passed = item.score >= 60;
+                    passed.checked = item.passed;
+                }
+                markResultStale();
+            });
+            const passLabel = document.createElement('label'); passLabel.className = 'pass-check';
+            passed.addEventListener('change', event => { item.passed = event.target.checked; markResultStale(); });
             passLabel.append(passed, document.createTextNode('已通过'));
             row.append(cell(name, '', '课程名称'), cell(categorySelect(item), '', '归属板块'), cell(credits, '', '学分'), cell(score, '', '成绩'), cell(passLabel, '', '是否通过'),
-                cell(deleteButton(() => { state.courses.splice(index, 1); renderCourseRows(); scheduleLiveResultUpdate(); }, `删除${item.name || '课程'}`), 'row-action', '操作'));
+                cell(deleteButton(() => { state.courses.splice(index, 1); renderCourseRows(); markResultStale(); }, `删除${item.name || '课程'}`), 'row-action', '操作'));
             elements.courseRows.append(row);
         });
         elements.courseCount.textContent = `${state.courses.length} 门`;
@@ -296,48 +321,52 @@
     $('#addModule').addEventListener('click', () => {
         state.modules.push({name: '', requiredCredits: 0, source: '', countsTowardTotal: true}); renderReview();
         elements.moduleRows.lastElementChild?.querySelector('input')?.focus();
-        scheduleLiveResultUpdate();
+        markResultStale();
     });
     $('#addCourse').addEventListener('click', () => {
         state.courses.push({name: '', category: '待归类', credits: 0, score: null, passed: true, source: ''}); renderCourseRows();
         elements.courseRows.lastElementChild?.querySelector('input')?.focus();
-        scheduleLiveResultUpdate();
+        markResultStale();
     });
 
+    function syncReviewInputs() {
+        [...elements.moduleRows.rows].forEach((row, index) => {
+            const item = state.modules[index];
+            if (!item) return;
+            item.name = row.querySelector('[aria-label="板块名称"]')?.value ?? item.name;
+            item.requiredCredits = Number(row.querySelector('[aria-label="要求学分"]')?.value) || 0;
+        });
+        [...elements.courseRows.rows].forEach((row, index) => {
+            const item = state.courses[index];
+            if (!item) return;
+            item.name = row.querySelector('[aria-label="课程名称"]')?.value ?? item.name;
+            const category = row.querySelector('[aria-label="归属板块"]')?.value;
+            if (category) item.category = category;
+            item.credits = Number(row.querySelector('[aria-label="课程学分"]')?.value) || 0;
+            const scoreValue = row.querySelector('[aria-label="课程成绩"]')?.value ?? '';
+            item.score = scoreValue === '' ? null : Number(scoreValue);
+            item.passed = Boolean(row.querySelector('[aria-label="课程已通过"]')?.checked);
+        });
+    }
+
     function collectResult() {
-        const modules = state.modules.filter(item => item.name.trim() && item.requiredCredits > 0);
-        if (!modules.length) throw new Error('请至少填写一个有效培养方案板块');
-        const duplicateNames = [], unique = new Map(), unnamed = [];
-        state.courses.filter(course => course.credits > 0 && course.passed).forEach(course => {
-            const key = normalize(course.name);
-            if (!key) { unnamed.push(course); return; }
-            const previous = unique.get(key);
-            if (!previous || course.credits > previous.credits) {
-                if (previous) duplicateNames.push(course.name); unique.set(key, course);
-            } else duplicateNames.push(course.name);
-        });
-        const validCourses = [...unique.values(), ...unnamed];
-        const details = modules.map(module => {
-            const earned = validCourses.filter(course => parentCategory(course.category) === module.name).reduce((sum, course) => sum + course.credits, 0);
-            return {...module, earned, counted: Math.min(earned, module.requiredCredits), missing: Math.max(0, module.requiredCredits - earned)};
-        });
-        const unassigned = validCourses.filter(course => !modules.some(module => module.name === parentCategory(course.category)));
-        const totalDetails = details.filter(item => item.countsTowardTotal !== false);
-        const required = totalDetails.reduce((sum, item) => sum + item.requiredCredits, 0);
-        const earned = totalDetails.reduce((sum, item) => sum + item.counted, 0);
-        const subDetails = [];
-        const completionDetails = (state.plan?.completionRequirements || []).filter(rule => !normalize(rule.courseName).includes('劳动')).map(rule => ({
-            ...rule, completed: validCourses.some(course => normalize(course.name).includes(normalize(rule.courseName)))
-        }));
-        return {details, required, earned, missing: Math.max(0, required - earned), unassigned, duplicateNames, subDetails, completionDetails};
+        syncReviewInputs();
+        if (!window.CreditAuditCalculator) throw new Error('学分计算组件加载失败，请刷新页面');
+        return window.CreditAuditCalculator.calculate(
+                state.modules, state.courses, state.plan?.completionRequirements || [],
+                state.plan?.subRequirements || []);
     }
     function updateResult(options = {}) {
-        clearTimeout(liveResultTimer);
         try {
             state.lastResult = collectResult();
             state.resultActivated = true;
+            state.resultRevision = state.editRevision;
+            state.calculationCount += 1;
             renderResult(state.lastResult);
             elements.result.classList.remove('is-hidden');
+            elements.result.classList.remove('is-stale');
+            elements.resultFreshness.textContent = `第 ${state.calculationCount} 次计算完成，所有汇总均已按当前数据同步。`;
+            elements.resultFreshness.className = 'result-freshness is-current';
             elements.calculate.textContent = '更新学分结果';
             if (options.announce) showToast(options.message || '学分结果已按最新修改更新');
             if (options.scroll) elements.result.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -349,10 +378,15 @@
             return false;
         }
     }
-    function scheduleLiveResultUpdate() {
+    function markResultStale() {
+        state.editRevision += 1;
+        elements.aiReviewFreshness.textContent = '你已修改识别数据；DeepSeek 意见仍基于首次上传文件，修改后的数值请以更新后的学分结果为准。';
+        elements.aiReviewFreshness.classList.remove('is-hidden');
         if (!state.resultActivated) return;
-        clearTimeout(liveResultTimer);
-        liveResultTimer = setTimeout(() => updateResult(), 120);
+        elements.result.classList.add('is-stale');
+        elements.resultFreshness.textContent = '课程或板块数据已修改，请点击“更新学分结果”同步全部汇总。';
+        elements.resultFreshness.className = 'result-freshness is-pending';
+        elements.calculate.textContent = '更新学分结果';
     }
     elements.calculate.addEventListener('click', () => {
         const isUpdate = state.resultActivated;
@@ -360,37 +394,63 @@
     });
     function formatNumber(value) { return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, ''); }
     function renderResult(result) {
-        const percent = result.required ? Math.min(100, Math.round(result.earned / result.required * 100)) : 0;
-        $('#progressPercent').textContent = `${percent}%`; $('#progressRing').style.setProperty('--progress', `${percent * 3.6}deg`);
-        $('#requiredTotal').textContent = formatNumber(result.required); $('#earnedTotal').textContent = formatNumber(result.earned); $('#missingTotal').textContent = formatNumber(result.missing);
-        $('#resultHeadline').textContent = result.missing > 0 ? `还需补足 ${formatNumber(result.missing)} 学分` : '培养方案板块学分已达标';
-        $('#resultBadge').textContent = result.missing > 0 ? '继续加油' : '板块已达标';
+        const summary = window.CreditAuditCalculator.summarize(result);
+        $('#progressPercent').textContent = `${summary.percent}%`; $('#progressRing').style.setProperty('--progress', `${summary.percent * 3.6}deg`);
+        $('#requiredTotal').textContent = formatNumber(summary.required); $('#earnedTotal').textContent = formatNumber(summary.earned); $('#missingTotal').textContent = formatNumber(summary.missing);
+        $('#resultHeadline').textContent = summary.missing > 0 ? `总学分还差 ${formatNumber(summary.missing)} 学分` : summary.headline;
+        $('#resultBadge').textContent = summary.badge;
         const container = $('#moduleResults'); container.replaceChildren();
         [...result.details].sort((a, b) => b.missing - a.missing).forEach(item => {
             const card = document.createElement('article'); card.className = `module-result${item.missing === 0 ? ' is-done' : ''}`;
             const head = document.createElement('div'); head.className = 'module-result-head';
             const title = document.createElement('b'); title.textContent = item.name;
-            const status = document.createElement('span'), strong = document.createElement('strong'); strong.textContent = item.missing === 0 ? '已达标' : `差 ${formatNumber(item.missing)}`;
+            const status = document.createElement('span'), strong = document.createElement('strong');
+            strong.textContent = item.countsTowardTotal === false
+                    ? (item.missing === 0 ? '单独达标' : `单独差 ${formatNumber(item.missing)}`)
+                    : (item.missing === 0 ? '已达标' : `差 ${formatNumber(item.missing)}`);
             status.append(document.createTextNode(`${formatNumber(item.earned)} / ${formatNumber(item.requiredCredits)} 学分 · `), strong); head.append(title, status);
             const bar = document.createElement('div'); bar.className = 'bar'; const fill = document.createElement('i');
             fill.style.width = `${Math.min(100, item.requiredCredits ? item.earned / item.requiredCredits * 100 : 0)}%`; bar.append(fill); card.append(head, bar); container.append(card);
         });
+        const completionResults = $('#completionResults'); completionResults.replaceChildren();
+        result.completionDetails.forEach(item => {
+            const row = document.createElement('div'); row.className = `completion-result${item.completed ? ' is-done' : ''}`;
+            const name = document.createElement('strong'); name.textContent = item.courseName;
+            const meta = document.createElement('span');
+            const credit = Number(item.nominalCredits) > 0 ? `${formatNumber(Number(item.nominalCredits))} 学分 · ` : '';
+            meta.textContent = `${credit}${item.countsTowardTotal === false ? '不计入毕业总学分' : '计入毕业总学分'} · ${item.completed ? '已识别完成' : '未识别完成'}`;
+            row.append(name, meta); completionResults.append(row);
+        });
+        if (!result.completionDetails.length) {
+            const empty = document.createElement('p'); empty.className = 'completion-empty'; empty.textContent = '当前方案未识别到另行完成要求，请以培养方案原文为准。'; completionResults.append(empty);
+        }
         const attention = $('#attentionList'); attention.replaceChildren();
         const missing = result.details.filter(item => item.missing > 0).sort((a, b) => b.missing - a.missing);
-        missing.slice(0, 3).forEach(item => addAttention(attention, `${item.name}还差 ${formatNumber(item.missing)} 学分。`));
+        missing.slice(0, 3).forEach(item => addAttention(attention, item.countsTowardTotal === false
+                ? `${item.name}还差 ${formatNumber(item.missing)} 学分，单独核对且不重复计入总学分。`
+                : `${item.name}还差 ${formatNumber(item.missing)} 学分。`));
         if (result.unassigned.length) addAttention(attention, `${result.unassigned.length} 门已通过课程尚未归类，共 ${formatNumber(result.unassigned.reduce((sum, item) => sum + item.credits, 0))} 学分。`);
         if (result.duplicateNames.length) addAttention(attention, `发现 ${result.duplicateNames.length} 条同名重复记录，本次只计一次。`);
-        const missingSub = result.subDetails.filter(item => item.missing > 0);
-        missingSub.forEach(item => addAttention(attention, `${item.parentModule}中的“${item.name}”专项还需核对 ${formatNumber(item.missing)} 学分。`));
+        result.subDetails.filter(item => !item.confirmed).forEach(item => addAttention(attention,
+                `${item.parentModule}中的“${item.name}”至少 ${formatNumber(item.requiredCredits)} 学分；成绩文件未提供可识别的专项分类，请人工核对。`));
+        result.subDetails.filter(item => item.confirmed && item.missing > 0).forEach(item => addAttention(attention,
+                `${item.parentModule}中的“${item.name}”还差 ${formatNumber(item.missing)} 学分。`));
         const missingCompletion = result.completionDetails.filter(item => !item.completed);
-        missingCompletion.forEach(item => addAttention(attention, `未识别到“${item.courseName}”完成记录；该课程不重复加到 165 学分中。`));
+        missingCompletion.forEach(item => addAttention(attention, item.countsTowardTotal === false
+                ? `未识别到“${item.courseName}”完成记录；该课程必须完成，但不计入 ${formatNumber(result.required)} 学分。`
+                : `未识别到“${item.courseName}”完成记录，请按培养方案核对。`));
         if (!attention.children.length) addAttention(attention, '各板块学分已达标，仍需核对必修课程、论文、实习及学校其他毕业条件。');
     }
     function addAttention(list, message) { const item = document.createElement('li'); item.textContent = message; list.append(item); }
 
     $('#downloadButton').addEventListener('click', () => {
         if (!state.lastResult) return;
-        const rows = [['板块', '要求学分', '已修学分', '待补学分'], ...state.lastResult.details.map(item => [item.name, formatNumber(item.requiredCredits), formatNumber(item.earned), formatNumber(item.missing)])];
+        const rows = [['板块', '要求学分', '已修学分', '待补学分'],
+            ...state.lastResult.details.map(item => [item.name, formatNumber(item.requiredCredits), formatNumber(item.earned), formatNumber(item.missing)]),
+            [], ['板块内专项要求', '最低学分', '已识别学分', '状态'],
+            ...state.lastResult.subDetails.map(item => [item.name, formatNumber(item.requiredCredits), item.confirmed ? formatNumber(item.earned) : '未识别', item.confirmed ? (item.missing > 0 ? `还差 ${formatNumber(item.missing)}` : '已达标') : '需人工核对']),
+            [], ['另行完成要求', '名义学分', '是否完成', '计入毕业总学分'],
+            ...state.lastResult.completionDetails.map(item => [item.courseName, formatNumber(Number(item.nominalCredits) || 0), item.completed ? '是' : '否', item.countsTowardTotal === false ? '否' : '是'])];
         const csvCell = value => {
             let text = String(value ?? '').replace(/[\r\n\t]+/g, ' ');
             if (/^[=+\-@＝＋－＠]/.test(text)) text = `\t${text}`;
@@ -401,7 +461,7 @@
         const link = document.createElement('a'); link.href = url; link.download = '毕业学分自查清单.csv'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
     $('#restartButton').addEventListener('click', () => {
-        clearTimeout(liveResultTimer); state.modules = []; state.courses = []; state.lastResult = null; state.resultActivated = false; elements.calculate.textContent = '生成学分结果'; elements.review.classList.add('is-hidden'); elements.result.classList.add('is-hidden'); $('#audit').scrollIntoView({behavior: 'smooth'});
+        state.modules = []; state.courses = []; state.aiVerification = null; state.lastResult = null; state.resultActivated = false; state.editRevision = 0; state.resultRevision = -1; state.calculationCount = 0; elements.calculate.textContent = '生成学分结果'; elements.resultFreshness.classList.add('is-hidden'); elements.aiReviewFreshness.classList.add('is-hidden'); elements.review.classList.add('is-hidden'); elements.result.classList.add('is-hidden'); $('#audit').scrollIntoView({behavior: 'smooth'});
     });
     $$('[data-open-privacy]').forEach(button => button.addEventListener('click', event => { event.preventDefault(); elements.privacy.showModal(); }));
     $$('[data-close-privacy]').forEach(button => button.addEventListener('click', () => elements.privacy.close()));

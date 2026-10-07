@@ -202,7 +202,8 @@ public class LoginFilter implements Filter {
         if ("/api/credit-audit/parse".equals(path)) {
             return "GET".equalsIgnoreCase(req.getMethod()) || "POST".equalsIgnoreCase(req.getMethod());
         }
-        if ("/api/credit-audit/plans".equals(path) || "/api/credit-audit/visit".equals(path)) {
+        if ("/api/credit-audit/plans".equals(path) || "/api/credit-audit/visit".equals(path)
+                || "/api/credit-audit/ai/status".equals(path)) {
             return "GET".equalsIgnoreCase(req.getMethod());
         }
         if ("/api/credit-audit/feedback".equals(path)) {
@@ -214,6 +215,11 @@ public class LoginFilter implements Filter {
         if ("/api/credit-audit/admin/plans".equals(path)) {
             return "GET".equalsIgnoreCase(req.getMethod())
                     || "POST".equalsIgnoreCase(req.getMethod())
+                    || "DELETE".equalsIgnoreCase(req.getMethod());
+        }
+        if ("/api/credit-audit/admin/password".equals(path)
+                || "/api/credit-audit/admin/ai".equals(path)) {
+            return "GET".equalsIgnoreCase(req.getMethod()) || "POST".equalsIgnoreCase(req.getMethod())
                     || "DELETE".equalsIgnoreCase(req.getMethod());
         }
         if ("/api/account/sliderChallenge".equals(path)

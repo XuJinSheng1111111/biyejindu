@@ -10,6 +10,7 @@ RESUME_PORT="4174"
 PACKAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WAR_SOURCE="${PACKAGE_DIR}/student_system.war"
 WAR_TARGET="/var/lib/${APP_NAME}/tomcat/webapps/ROOT.war"
+ENV_FILE="/etc/${APP_NAME}/${APP_NAME}.env"
 BACKUP_ROOT="/var/backups/${APP_NAME}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="${BACKUP_ROOT}/${STAMP}"
@@ -26,9 +27,22 @@ fi
 [[ -f "${WAR_TARGET}" ]] || die "尚未完成首次部署，缺少 ${WAR_TARGET}。"
 command -v jar >/dev/null 2>&1 || die "未找到 jar 工具，请确认 Java 21 已安装。"
 command -v curl >/dev/null 2>&1 || die "未找到 curl。"
+command -v openssl >/dev/null 2>&1 || die "未找到 OpenSSL。"
+[[ -f "${ENV_FILE}" ]] || die "缺少服务环境文件 ${ENV_FILE}。"
 
 exec 9>"${LOCK_FILE}"
 flock -n 9 || die "已有更新任务正在运行，请稍后再试。"
+
+log "补齐 AI 设置加密密钥"
+if ! grep -q '^CREDIT_AUDIT_SETTINGS_KEY=' "${ENV_FILE}"; then
+  settings_key="$(openssl rand -base64 48 | tr -d '\n')"
+  printf '\nCREDIT_AUDIT_SETTINGS_KEY=%s\n' "${settings_key}" >> "${ENV_FILE}"
+fi
+if ! grep -q '^DEEPSEEK_API_KEY=' "${ENV_FILE}"; then
+  printf 'DEEPSEEK_API_KEY=\n' >> "${ENV_FILE}"
+fi
+chmod 0640 "${ENV_FILE}"
+chown root:"${APP_NAME}" "${ENV_FILE}"
 
 log "核验两个服务的隔离边界"
 systemctl is-active --quiet "${RESUME_SERVICE}" || die "简历网站服务当前不健康，停止更新。"

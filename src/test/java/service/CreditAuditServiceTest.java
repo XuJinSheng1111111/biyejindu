@@ -43,14 +43,15 @@ class CreditAuditServiceTest {
         var result = service.parseCourses(html.getBytes(StandardCharsets.UTF_8), "重修成绩.html");
         assertEquals(2, result.courses().size());
         assertFalse(result.courses().getFirst().passed());
+        assertTrue(result.courses().get(1).passed());
     }
 
     @Test
     void parsesSimplePlanCsv() throws Exception {
         String csv = "课程模块,要求学分\n通识必修,43.5\n专业必修,41.5\n专业选修,23\n劳动学分,2\n";
         var result = service.parsePlan(csv.getBytes(StandardCharsets.UTF_8), "方案.csv");
-        assertEquals(4, result.modules().size());
-        assertTrue(result.modules().stream().anyMatch(module -> "劳动学分".equals(module.name())));
+        assertEquals(3, result.modules().size());
+        assertFalse(result.modules().stream().anyMatch(module -> "劳动学分".equals(module.name())));
         assertTrue(result.modules().stream().allMatch(module -> !module.name().contains("实践教学")));
     }
 
@@ -65,6 +66,8 @@ class CreditAuditServiceTest {
     @Test
     void prioritizesGraduationMinimumTableAndHandlesMergedCategories() throws Exception {
         String html = """
+                <p>本专业所有开设课程的总学分为170学分，其中必修课学分132学分、选修课学分38学分。
+                毕业标准最低总学分为165学分，其中必修课学分127学分、选修课学分38学分。</p>
                 <table>
                 <tr><td>通识课程</td><td>必修课</td><td>43.5</td></tr>
                 <tr><td></td><td>选修课</td><td>15</td></tr>
@@ -73,11 +76,40 @@ class CreditAuditServiceTest {
                 <tr><td></td><td>选修课</td><td>23</td></tr>
                 <tr><td>毕业标准最低总学分合计</td><td>165</td></tr>
                 </table>
-                <table><tr><td>劳动</td><td>必修</td><td>2</td></tr></table>
+                <table>
+                <tr><th>修读性质</th><th>课程模块</th><th>课程名称</th><th>学分</th><th>修读要求</th></tr>
+                <tr><td>必修</td><td>素质课程</td><td>国家安全教育</td><td>1</td><td>全部修读</td></tr>
+                <tr><td>必修</td><td>素质课程</td><td>大学生健康与安全教育</td><td>1</td><td>全部修读</td></tr>
+                <tr><td>必修</td><td>素质课程</td><td>劳动</td><td>2</td><td>全部修读</td></tr>
+                <tr><td>必修</td><td>素质课程</td><td>职业生涯规划</td><td>0.5</td><td>全部修读</td></tr>
+                <tr><td>必修</td><td>素质课程</td><td>毕业生就业指导</td><td>0.5</td><td>全部修读</td></tr>
+                </table>
                 """;
         var result = service.parsePlan(html.getBytes(StandardCharsets.UTF_8), "方案.html");
-        assertEquals(6, result.modules().size());
+        assertEquals(5, result.modules().size());
+        assertEquals(165, result.totalCredits());
         assertTrue(result.modules().stream().anyMatch(module -> "专业选修".equals(module.name()) && module.requiredCredits() == 23));
-        assertTrue(result.modules().stream().anyMatch(module -> "劳动学分".equals(module.name()) && module.requiredCredits() == 2));
+        assertEquals(5, result.completionRequirements().size());
+        assertTrue(result.completionRequirements().stream().allMatch(rule -> !rule.countsTowardTotal()));
+    }
+
+    @Test
+    void reportsContradictoryOpenedCreditTotalsWithoutChangingGraduationStandard() throws Exception {
+        String html = """
+                <p>本专业所有开设课程的总学分为218.5学分，其中必修课学分139.5学分、选修课学分79学分。
+                毕业标准最低总学分为165学分，其中必修课学分134.5学分、选修课学分30.5学分。</p>
+                <table><tr><td>所开设课程总学分合计</td><td>220.5</td></tr></table>
+                <table>
+                <tr><td>通识课程</td><td>必修课</td><td>43.5</td></tr>
+                <tr><td></td><td>选修课</td><td>15</td></tr>
+                <tr><td>学科基础课程</td><td>必修课</td><td>37</td></tr>
+                <tr><td>专业课程</td><td>必修课</td><td>54</td></tr>
+                <tr><td></td><td>选修课</td><td>15.5</td></tr>
+                <tr><td>毕业标准最低总学分合计</td><td>165</td></tr>
+                </table>
+                """;
+        var result = service.parsePlan(html.getBytes(StandardCharsets.UTF_8), "数学方案.html");
+        assertEquals(165, result.totalCredits());
+        assertTrue(result.warnings().stream().anyMatch(message -> message.contains("218.5") && message.contains("220.5")));
     }
 }

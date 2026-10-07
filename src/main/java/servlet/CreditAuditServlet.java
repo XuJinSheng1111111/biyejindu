@@ -5,6 +5,8 @@ import pojo.Result;
 import service.CreditAuditService;
 import service.CreditAuditOperationsService;
 import service.CreditPlanRegistryService;
+import service.DeepSeekClient;
+import service.DeepSeekVerificationService;
 import service.RequestRateLimiter;
 import service.ScoreArchiveParser;
 
@@ -41,6 +43,7 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
     private static final ScoreArchiveParser ARCHIVE_PARSER = new ScoreArchiveParser(SERVICE);
     private static final CreditPlanRegistryService PLANS = CreditPlanRegistryService.getInstance();
     private static final CreditAuditOperationsService OPERATIONS = CreditAuditOperationsService.getInstance();
+    private static final DeepSeekVerificationService AI_VERIFICATION = DeepSeekVerificationService.getInstance();
     private static final Duration RATE_WINDOW = Duration.ofMinutes(10);
     private static final Duration DAILY_RATE_WINDOW = Duration.ofDays(1);
     private static final Set<String> MULTIPART_FIELDS = Set.of(
@@ -198,10 +201,12 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
                 String canonicalName = PLANS.canonicalSourceName(school, major, cohort, planName);
                 plan = new CreditPlanRegistryService.PlanRecord("", school, major, cohort, planHash,
                         canonicalName, false, Instant.now().toString(), parsedPlan.modules(),
-                        0, 0, 0, List.of(), List.of());
+                        parsedPlan.totalCredits(), parsedPlan.requiredCredits(), parsedPlan.electiveCredits(),
+                        parsedPlan.subRequirements(), parsedPlan.completionRequirements());
                 warnings.add("该培养方案为自动提取版本，需逐项核对后再使用结果。");
             }
         }
+        warnings.addAll(PLANS.validationWarnings(plan));
         List<CreditAuditService.CourseRecord> scoreCourses;
         List<String> scoreWarnings;
         if (isScoreArchive(scoreName)) {
@@ -214,7 +219,8 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
             scoreWarnings = documentScores.warnings();
         }
         warnings.addAll(scoreWarnings);
-        return new AuditResponse(plan, plan.modules(), scoreCourses, warnings, scoreName, reused);
+        DeepSeekClient.AiReview aiReview = AI_VERIFICATION.verify(plan, scoreCourses, warnings);
+        return new AuditResponse(plan, plan.modules(), scoreCourses, warnings, scoreName, reused, aiReview);
     }
 
     private boolean allow(String key, int limit) {
@@ -255,5 +261,6 @@ public class CreditAuditServlet extends CreditAuditApiServlet {
     public record AuditResponse(CreditPlanRegistryService.PlanRecord plan,
                                 List<CreditAuditService.ModuleRequirement> modules,
                                 List<CreditAuditService.CourseRecord> courses,
-                                List<String> warnings, String scoreFileName, boolean planReused) {}
+                                List<String> warnings, String scoreFileName, boolean planReused,
+                                DeepSeekClient.AiReview aiVerification) {}
 }

@@ -7,6 +7,7 @@
     let data = null;
     let toastTimer;
     let replacementPlan = null;
+    let aiSettings = null;
 
     function showToast(message) {
         const toast = $('#adminToast'); toast.textContent = message; toast.classList.add('show');
@@ -26,6 +27,7 @@
         data = await request();
         accessPanel.classList.add('is-hidden'); dashboard.classList.remove('is-hidden'); render();
         loadManagedPlans().catch(error => { $('#planUploadResult').textContent = error.message; });
+        loadAiSettings().catch(error => { $('#aiSettingsResult').textContent = error.message; });
     }
     $('#accessForm').addEventListener('submit', async event => {
         event.preventDefault(); sessionStorage.setItem(storageKey, $('#adminKey').value.trim());
@@ -37,6 +39,118 @@
     });
     $('#lockButton').addEventListener('click', () => {
         sessionStorage.removeItem(storageKey); dashboard.classList.add('is-hidden'); accessPanel.classList.remove('is-hidden'); $('#adminKey').value = '';
+    });
+
+    async function aiRequest(body) {
+        const response = await fetch('api/credit-audit/admin/ai', {
+            method: body ? 'POST' : 'GET', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', 'X-Credit-Admin-Key': key(), 'X-Credit-Audit-Request': '1'},
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || payload?.code !== 200) throw new Error(payload?.msg || 'AI 设置操作失败');
+        return payload.data;
+    }
+
+    async function loadAiSettings() {
+        aiSettings = await aiRequest();
+        renderAiSettings();
+    }
+
+    function renderAiSettings() {
+        if (!aiSettings) return;
+        const modelSelect = $('#deepSeekModel');
+        modelSelect.replaceChildren();
+        (aiSettings.models || []).forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = `${model.name}（${model.id}）`;
+            option.selected = model.id === aiSettings.modelId;
+            modelSelect.append(option);
+        });
+        renderEfforts();
+        renderModels();
+    }
+
+    function renderEfforts() {
+        const model = (aiSettings?.models || []).find(item => item.id === $('#deepSeekModel').value);
+        const efforts = ['none', ...(model?.supportedEfforts || ['low', 'high', 'max'])];
+        const labels = {none: 'none（关闭思考）', low: 'low（快速）', high: 'high（深入）', max: 'max（最强）'};
+        const select = $('#deepSeekEffort');
+        const selected = efforts.includes(aiSettings?.reasoningEffort) ? aiSettings.reasoningEffort : 'high';
+        select.replaceChildren();
+        efforts.forEach(effort => {
+            const option = document.createElement('option'); option.value = effort; option.textContent = labels[effort] || effort;
+            option.selected = effort === selected; select.append(option);
+        });
+    }
+
+    function renderModels() {
+        const list = $('#modelList'); list.replaceChildren();
+        (aiSettings?.models || []).forEach(model => {
+            const row = document.createElement('article');
+            const copy = document.createElement('div');
+            const title = document.createElement('strong'); title.textContent = model.name;
+            copy.append(title); row.append(copy);
+            if (model.source === '手动添加') {
+                const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '删除';
+                remove.addEventListener('click', () => removeModel(model.id)); row.append(remove);
+            }
+            list.append(row);
+        });
+    }
+
+    $('#deepSeekModel').addEventListener('change', renderEfforts);
+    $('#aiSettingsForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const result = $('#aiSettingsResult'); result.textContent = '正在保存…';
+        try {
+            aiSettings = await aiRequest({action: 'save', apiKey: $('#deepSeekApiKey').value.trim(),
+                modelId: $('#deepSeekModel').value, reasoningEffort: $('#deepSeekEffort').value});
+            $('#deepSeekApiKey').value = ''; renderAiSettings(); result.textContent = 'AI 设置已保存';
+        } catch (error) { result.textContent = error.message; }
+    });
+    $('#syncModelsButton').addEventListener('click', async () => {
+        const result = $('#aiSettingsResult'); result.textContent = '正在从 DeepSeek 同步模型…';
+        try { aiSettings = await aiRequest({action: 'sync'}); renderAiSettings(); result.textContent = '官方模型已同步'; }
+        catch (error) { result.textContent = error.message; }
+    });
+    $('#testAiButton').addEventListener('click', async () => {
+        const result = $('#aiSettingsResult'); result.textContent = '正在测试 DeepSeek 连接…';
+        try { const response = await aiRequest({action: 'test'}); aiSettings = response.settings; renderAiSettings(); result.textContent = response.message; }
+        catch (error) { result.textContent = error.message; }
+    });
+    $('#addModelForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const efforts = [...document.querySelectorAll('[name="customEffort"]:checked')].map(item => item.value);
+        try {
+            aiSettings = await aiRequest({action: 'addModel', modelId: $('#customModelId').value.trim(),
+                modelName: $('#customModelName').value.trim(), supportedEfforts: efforts});
+            event.currentTarget.reset(); renderAiSettings(); showToast('模型已添加');
+        } catch (error) { showToast(error.message); }
+    });
+    async function removeModel(modelId) {
+        try { aiSettings = await aiRequest({action: 'removeModel', modelId}); renderAiSettings(); showToast('模型已删除'); }
+        catch (error) { showToast(error.message); }
+    }
+
+    $('#passwordForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const currentPassword = $('#currentAdminPassword').value;
+        const newPassword = $('#newAdminPassword').value;
+        const confirmPassword = $('#confirmAdminPassword').value;
+        const result = $('#passwordResult');
+        if (newPassword !== confirmPassword) { result.textContent = '两次输入的新密码不一致'; return; }
+        try {
+            const response = await fetch('api/credit-audit/admin/password', {
+                method: 'POST', credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json', 'X-Credit-Admin-Key': key(), 'X-Credit-Audit-Request': '1'},
+                body: JSON.stringify({currentPassword, newPassword, confirmPassword})
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || payload?.code !== 200) throw new Error(payload?.msg || '后台密码修改失败');
+            sessionStorage.setItem(storageKey, newPassword); event.currentTarget.reset(); result.textContent = '后台密码已更新';
+        } catch (error) { result.textContent = error.message; }
     });
     $('#adminPlanFile').addEventListener('change', event => {
         const selected = event.currentTarget.files?.[0];

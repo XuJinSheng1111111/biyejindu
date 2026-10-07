@@ -56,6 +56,11 @@ public final class CreditAuditService {
     private static final long MAX_ARCHIVE_ENTRY_BYTES = 16L * 1024 * 1024;
     private static final Pattern CREDIT_PATTERN = Pattern.compile("(?<![\\d.])(\\d{1,3}(?:\\.\\d{1,2})?)(?:\\s*学分)?(?![\\d.])");
     private static final Pattern SCORE_PATTERN = Pattern.compile("(?<![\\d.])(\\d{1,3}(?:\\.\\d{1,2})?)(?![\\d.])");
+    private static final Pattern PLAN_TOTALS_PATTERN = Pattern.compile(
+            "所有开设课程的总学分为?(\\d+(?:\\.\\d+)?)学分.*?必修课学分(\\d+(?:\\.\\d+)?)学分.*?"
+                    + "选修课学分(\\d+(?:\\.\\d+)?)学分.*?毕业标准最低总学分为?(\\d+(?:\\.\\d+)?)学分.*?"
+                    + "必修课学分(\\d+(?:\\.\\d+)?)学分.*?选修课学分(\\d+(?:\\.\\d+)?)学分",
+            Pattern.DOTALL);
     private static final Set<String> PLAN_HINTS = Set.of(
             "通识", "公共", "基础", "专业", "学科", "必修", "选修", "实践", "实习", "毕业设计",
             "创新创业", "第二课堂", "素质拓展", "劳动", "军事", "体育", "合计", "总计"
@@ -94,10 +99,24 @@ public final class CreditAuditService {
     public PlanExtraction parsePlan(byte[] bytes, String fileName) throws IOException {
         DocumentData data = extract(bytes, fileName);
         List<ModuleRequirement> modules = extractRequirements(data);
+        PlanTotals totals = extractPlanTotals(data, modules);
+        List<CreditPlanRegistryService.CompletionRequirement> completionRequirements =
+                extractCompletionRequirements(data, totals);
+        List<CreditPlanRegistryService.SubRequirement> subRequirements = extractSubRequirements(data);
         List<String> warnings = new ArrayList<>();
         if (modules.isEmpty()) warnings.add("未自动识别到学分板块，请按培养方案手动添加后再核验。");
         if (data.text().isBlank()) warnings.add("培养方案没有可复制文字，可能是扫描件，请换用可复制文字的文件。");
-        return new PlanExtraction(modules, warnings, fileName);
+        if (totals.graduationTotal() > 0 && Math.abs(totals.graduationTotal() - sumModuleCredits(modules)) > 0.01) {
+            warnings.add("毕业标准表的板块合计与毕业最低总学分不一致，请核对培养方案原文。");
+        }
+        if (totals.openedTableTotal() > 0 && totals.openedTextTotal() > 0
+                && Math.abs(totals.openedTableTotal() - totals.openedTextTotal()) > 0.01) {
+            warnings.add("培养方案原文存在矛盾：正文写开设课程总学分为 "
+                    + formatNumber(totals.openedTextTotal()) + "，表格合计为 "
+                    + formatNumber(totals.openedTableTotal()) + "，请由学校确认。");
+        }
+        return new PlanExtraction(modules, totals.graduationTotal(), totals.graduationRequired(),
+                totals.graduationElective(), subRequirements, completionRequirements, warnings, fileName);
     }
 
     public CourseExtraction parseCourses(byte[] bytes, String fileName) throws IOException {
@@ -293,9 +312,6 @@ public final class CreditAuditService {
         if (graduationTotalRow >= 0) {
             int start = Math.max(0, graduationTotalRow - 10);
             candidates.addAll(data.rows().subList(start, graduationTotalRow));
-            data.rows().stream()
-                    .filter(row -> normalize(String.join(" ", row)).contains("劳动"))
-                    .forEach(candidates::add);
         } else {
             candidates.addAll(data.rows());
             data.lines().forEach(line -> candidates.add(List.of(line)));
@@ -323,8 +339,7 @@ public final class CreditAuditService {
                 continue;
             }
             String key = normalize(name);
-            String status = "劳动学分".equals(name) ? "不计入总学分" : "待确认";
-            found.put(key, new ModuleRequirement(name, credits, excerpt(joined), status));
+            found.put(key, new ModuleRequirement(name, credits, excerpt(joined), "待确认"));
             if (found.size() >= 30) {
                 break;
             }
@@ -336,8 +351,6 @@ public final class CreditAuditService {
     private String canonicalModuleName(List<String> row, String text) {
         String value = normalize(String.join(" ", row.subList(0, Math.min(row.size(), 4))));
         if (value.isBlank()) value = normalize(text);
-        String full = normalize(text);
-        if (value.contains("劳动") && (full.contains("学分") || full.contains("必修"))) return "劳动学分";
         if (value.contains("必修") && value.contains("选修")) return null;
         if ((value.contains("通识") || value.contains("公共")) && value.contains("必修")) return "通识必修";
         if ((value.contains("通识") || value.contains("公共")) && value.contains("选修")) return "通识选修";
@@ -345,6 +358,136 @@ public final class CreditAuditService {
         if (value.contains("专业") && value.contains("必修")) return "专业必修";
         if (value.contains("专业") && value.contains("选修")) return "专业选修";
         return null;
+    }
+
+    private PlanTotals extractPlanTotals(DocumentData data, List<ModuleRequirement> modules) {
+        double moduleTotal = sumModuleCredits(modules);
+        double moduleRequired = modules.stream().filter(item -> normalize(item.name()).contains("必修"))
+                .mapToDouble(ModuleRequirement::requiredCredits).sum();
+        double moduleElective = modules.stream().filter(item -> normalize(item.name()).contains("选修"))
+                .mapToDouble(ModuleRequirement::requiredCredits).sum();
+        double openedTextTotal = 0;
+        double openedRequired = 0;
+        double openedElective = 0;
+        double graduationTextTotal = 0;
+        double graduationTextRequired = 0;
+        double graduationTextElective = 0;
+        String compact = clean(data.text()).replace(" ", "");
+        Matcher totals = PLAN_TOTALS_PATTERN.matcher(compact);
+        if (totals.find()) {
+            openedTextTotal = parseNumber(totals.group(1));
+            openedRequired = parseNumber(totals.group(2));
+            openedElective = parseNumber(totals.group(3));
+            graduationTextTotal = parseNumber(totals.group(4));
+            graduationTextRequired = parseNumber(totals.group(5));
+            graduationTextElective = parseNumber(totals.group(6));
+        }
+        double openedTableTotal = findSummaryCredit(data.rows(), "所开设课程总学分合计");
+        double graduationTotal = moduleTotal > 0 ? moduleTotal : graduationTextTotal;
+        double graduationRequired = moduleRequired > 0 ? moduleRequired : graduationTextRequired;
+        double graduationElective = moduleElective > 0 ? moduleElective : graduationTextElective;
+        return new PlanTotals(openedTextTotal, openedTableTotal, openedRequired, openedElective,
+                graduationTotal, graduationRequired, graduationElective);
+    }
+
+    private double findSummaryCredit(List<List<String>> rows, String label) {
+        String normalizedLabel = normalize(label);
+        for (List<String> row : rows) {
+            if (!normalize(String.join(" ", row)).contains(normalizedLabel)) continue;
+            for (String value : row) {
+                Double parsed = parseCredit(value);
+                if (parsed != null && parsed > 20 && parsed < 300 && parsed != 100) return parsed;
+            }
+        }
+        return 0;
+    }
+
+    private List<CreditPlanRegistryService.CompletionRequirement> extractCompletionRequirements(
+            DocumentData data, PlanTotals totals) {
+        LinkedHashMap<String, PendingCompletion> found = new LinkedHashMap<>();
+        int moduleColumn = -1;
+        int courseColumn = -1;
+        int creditColumn = -1;
+        int requirementColumn = -1;
+        String currentModule = "";
+        String currentRequirement = "";
+        for (List<String> row : data.rows()) {
+            int headerCourse = lastHeaderIndex(row, "课程名称");
+            int headerCredit = lastHeaderIndex(row, "学分");
+            int headerRequirement = lastHeaderIndex(row, "修读要求");
+            if (headerCourse >= 0 && headerCredit >= 0 && headerRequirement >= 0) {
+                moduleColumn = lastHeaderIndex(row, "课程模块");
+                courseColumn = headerCourse;
+                creditColumn = headerCredit;
+                requirementColumn = headerRequirement;
+                currentModule = "";
+                currentRequirement = "";
+                continue;
+            }
+            if (courseColumn < 0 || creditColumn < 0 || requirementColumn < 0) continue;
+            String module = cell(row, moduleColumn);
+            if (!module.isBlank()) currentModule = module;
+            String requirement = cell(row, requirementColumn);
+            if (!requirement.isBlank()) currentRequirement = requirement;
+            if (!normalize(currentRequirement).contains("全部修读")) continue;
+            String courseName = cell(row, courseColumn);
+            Double credits = parseCredit(cell(row, creditColumn));
+            if (courseName.isBlank() || credits == null || credits <= 0 || credits > 20) continue;
+            String key = normalize(courseName);
+            boolean explicitlyExcluded = normalize(currentModule).contains("不计入毕业学分");
+            found.putIfAbsent(key, new PendingCompletion(courseName, credits, explicitlyExcluded));
+        }
+        double completionCredits = found.values().stream().mapToDouble(PendingCompletion::nominalCredits).sum();
+        boolean excludedByTotals = totals.openedRequired() > 0 && totals.graduationRequired() > 0
+                && Math.abs((totals.openedRequired() - totals.graduationRequired()) - completionCredits) <= 0.01;
+        return found.values().stream().map(item -> new CreditPlanRegistryService.CompletionRequirement(
+                item.courseName(), item.nominalCredits(), !(item.explicitlyExcluded() || excludedByTotals))).toList();
+    }
+
+    private List<CreditPlanRegistryService.SubRequirement> extractSubRequirements(DocumentData data) {
+        LinkedHashMap<String, CreditPlanRegistryService.SubRequirement> found = new LinkedHashMap<>();
+        for (List<String> row : data.rows()) {
+            int creditIndex = -1;
+            for (int index = 0; index < row.size(); index++) {
+                if (row.get(index).matches(".*[≥＞]\\s*\\d+(?:\\.\\d+)?.*")) {
+                    creditIndex = index;
+                    break;
+                }
+            }
+            if (creditIndex < 0) continue;
+            String creditText = row.get(creditIndex);
+            String courseName = "";
+            for (int index = creditIndex - 1; index >= 0; index--) {
+                String candidate = clean(row.get(index));
+                if (!candidate.isBlank() && !normalize(candidate).equals("选修")) {
+                    courseName = candidate;
+                    break;
+                }
+            }
+            if (courseName.isBlank()) continue;
+            Double credits = parseCredit(creditText);
+            if (credits == null || credits <= 0 || credits > 20) continue;
+            found.putIfAbsent(normalize(courseName),
+                    new CreditPlanRegistryService.SubRequirement("通识选修", courseName, credits));
+        }
+        return new ArrayList<>(found.values());
+    }
+
+    private int lastHeaderIndex(List<String> row, String header) {
+        int found = -1;
+        String target = normalize(header);
+        for (int index = 0; index < row.size(); index++) {
+            if (normalize(row.get(index)).equals(target)) found = index;
+        }
+        return found;
+    }
+
+    private double sumModuleCredits(List<ModuleRequirement> modules) {
+        return modules.stream().mapToDouble(ModuleRequirement::requiredCredits).sum();
+    }
+
+    private String formatNumber(double value) {
+        return value == Math.rint(value) ? Long.toString(Math.round(value)) : Double.toString(value);
     }
 
     private List<CourseRecord> extractCourses(DocumentData data) {
@@ -682,8 +825,16 @@ public final class CreditAuditService {
     public record CourseRecord(String name, String category, double credits, double score, boolean passed, String source) {}
     public record AuditExtraction(List<ModuleRequirement> modules, List<CourseRecord> courses,
                                   List<String> warnings, String planFileName, String scoreFileName) {}
-    public record PlanExtraction(List<ModuleRequirement> modules, List<String> warnings, String fileName) {}
+    public record PlanExtraction(List<ModuleRequirement> modules, double totalCredits, double requiredCredits,
+                                 double electiveCredits,
+                                 List<CreditPlanRegistryService.SubRequirement> subRequirements,
+                                 List<CreditPlanRegistryService.CompletionRequirement> completionRequirements,
+                                 List<String> warnings, String fileName) {}
     public record CourseExtraction(List<CourseRecord> courses, List<String> warnings, String fileName) {}
     record DocumentData(String text, List<String> lines, List<List<String>> rows) {}
     record ColumnMap(int name, int credit, int category, int score, int status) {}
+    private record PlanTotals(double openedTextTotal, double openedTableTotal, double openedRequired,
+                              double openedElective, double graduationTotal, double graduationRequired,
+                              double graduationElective) {}
+    private record PendingCompletion(String courseName, double nominalCredits, boolean explicitlyExcluded) {}
 }

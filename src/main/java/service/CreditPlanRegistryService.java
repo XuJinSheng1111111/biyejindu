@@ -71,8 +71,8 @@ public final class CreditPlanRegistryService {
     }
 
     public synchronized PlanRecord saveProvisional(String school, String major, String cohort, String hash,
-                                                    String sourceName,
-                                                    List<CreditAuditService.ModuleRequirement> modules) throws IOException {
+                                                     String sourceName,
+                                                     CreditAuditService.PlanExtraction extraction) throws IOException {
         validateIdentity(school, major, cohort);
         String normalizedHash = normalizeHash(hash);
         PlanRecord existing = records.stream().filter(item -> item.sha256().equals(normalizedHash)
@@ -82,7 +82,9 @@ public final class CreditPlanRegistryService {
         PlanRecord record = new PlanRecord(
                 UUID.randomUUID().toString(), clean(school, 60), clean(major, 80), clean(cohort, 20),
                 normalizedHash, clean(sourceName, 120), false, Instant.now().toString(),
-                List.copyOf(modules), 0, 0, 0, List.of(), List.of()
+                List.copyOf(extraction.modules()), extraction.totalCredits(), extraction.requiredCredits(),
+                extraction.electiveCredits(), List.copyOf(extraction.subRequirements()),
+                List.copyOf(extraction.completionRequirements())
         );
         records.add(record);
         persist();
@@ -92,6 +94,14 @@ public final class CreditPlanRegistryService {
     public synchronized PlanRecord findById(String id) {
         if (id == null || id.length() > 80) return null;
         return records.stream().filter(item -> isActive(item.id()) && item.id().equals(id)).findFirst().orElse(null);
+    }
+
+    public List<String> validationWarnings(PlanRecord plan) {
+        if (plan != null && MATH_HASH.equals(plan.sha256())) {
+            return List.of("培养方案原文存在矛盾：正文写开设课程总学分为 218.5，表 3 各项相加及合计为 220.5；"
+                    + "毕业进度仍按表 6 的最低 165 学分计算，开设课程总量请向学校确认。");
+        }
+        return List.of();
     }
 
     /** 返回前端可直接选择的方案元数据，不包含上传原文件。 */
@@ -123,8 +133,8 @@ public final class CreditPlanRegistryService {
     }
 
     public synchronized PlanRecord replace(String id, String school, String major, String cohort, String hash,
-                                           String sourceName,
-                                           List<CreditAuditService.ModuleRequirement> modules) throws IOException {
+                                            String sourceName,
+                                            CreditAuditService.PlanExtraction extraction) throws IOException {
         PlanRecord previous = findAnyById(id);
         if (previous == null) throw new IOException("需要替换的培养方案不存在");
         validateIdentity(school, major, cohort);
@@ -132,7 +142,9 @@ public final class CreditPlanRegistryService {
         PlanRecord replacement = new PlanRecord(
                 UUID.randomUUID().toString(), clean(school, 60), clean(major, 80), clean(cohort, 20),
                 normalizeHash(hash), clean(sourceName, 120), false, Instant.now().toString(),
-                List.copyOf(modules), 0, 0, 0, List.of(), List.of()
+                List.copyOf(extraction.modules()), extraction.totalCredits(), extraction.requiredCredits(),
+                extraction.electiveCredits(), List.copyOf(extraction.subRequirements()),
+                List.copyOf(extraction.completionRequirements())
         );
         boolean wasInactive = inactivePlanIds.contains(previous.id());
         records.add(replacement);
@@ -184,13 +196,13 @@ public final class CreditPlanRegistryService {
     private PlanRecord mathPlan() {
         return verified("builtin-math-070101-2024", "数学与应用数学", MATH_HASH, 134.5, 30.5,
                 List.of(module("通识必修", 43.5), module("通识选修", 15), module("学科基础必修", 37),
-                        module("专业必修", 54), module("专业选修", 15.5), nonTotalModule("劳动学分", 2)));
+                        module("专业必修", 54), module("专业选修", 15.5)));
     }
 
     private PlanRecord infoPlan() {
         return verified("builtin-info-070102-2024", "信息与计算科学", INFO_HASH, 127, 38,
                 List.of(module("通识必修", 43.5), module("通识选修", 15), module("学科基础必修", 42),
-                        module("专业必修", 41.5), module("专业选修", 23), nonTotalModule("劳动学分", 2)));
+                        module("专业必修", 41.5), module("专业选修", 23)));
     }
 
     private PlanRecord verified(String id, String major, String hash, double required, double elective,
@@ -216,11 +228,8 @@ public final class CreditPlanRegistryService {
     }
 
     private CreditAuditService.ModuleRequirement module(String name, double credits) {
-        return new CreditAuditService.ModuleRequirement(name, credits, "已核对培养方案毕业标准表", "已核对");
-    }
-
-    private CreditAuditService.ModuleRequirement nonTotalModule(String name, double credits) {
-        return new CreditAuditService.ModuleRequirement(name, credits, "已核对培养方案", "不计入总学分");
+        return new CreditAuditService.ModuleRequirement(name, credits,
+                "毕业标准表：" + name + " " + credits + " 学分", "已核对");
     }
 
     private PlanRecord copyForIdentity(PlanRecord source, String school, String major, String cohort) {

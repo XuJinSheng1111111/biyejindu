@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#fff8fa">
     <meta http-equiv="Cache-Control" content="no-store">
     <title>毕业进度小管家｜运营后台</title>
-    <link rel="stylesheet" href="static/css/credit-admin.css?v=20261006-mobile-1">
+    <link rel="stylesheet" href="static/css/credit-admin.css?v=20261007-ai-4">
 </head>
 <body>
 <div class="admin-backdrop" aria-hidden="true">
@@ -17,8 +17,8 @@
         <p class="kicker">毕业进度小管家</p>
         <h1>运营后台</h1>
         <form id="accessForm">
-            <label for="adminKey">管理密钥</label>
-            <input id="adminKey" type="password" minlength="24" autocomplete="current-password" required>
+            <label for="adminKey">后台密码</label>
+            <input id="adminKey" type="password" minlength="6" maxlength="256" autocomplete="current-password" required>
             <button class="main-action" type="submit">进入后台</button>
         </form>
         <p class="login-error" id="accessError" role="alert"></p>
@@ -47,6 +47,43 @@
                 <dl class="runtime-list"><div><dt>成功核验</dt><dd id="successAudits">0</dd></div><div><dt>失败核验</dt><dd id="failedAudits">0</dd></div><div><dt>新方案解析</dt><dd id="planUploads">0</dd></div><div><dt>已解析课程</dt><dd id="coursesParsed">0</dd></div></dl>
             </section>
         </div>
+
+        <section class="content-section settings-section" aria-labelledby="ai-settings-title">
+            <header class="section-heading"><h2 id="ai-settings-title">AI 二次核对</h2></header>
+            <form id="aiSettingsForm" class="settings-form">
+                <label><span>DeepSeek API 密钥</span><input id="deepSeekApiKey" type="password" maxlength="256" autocomplete="new-password" placeholder="留空表示不更换当前密钥"></label>
+                <label><span>使用模型</span><select id="deepSeekModel" required></select></label>
+                <label><span>推理档位</span><select id="deepSeekEffort" required></select></label>
+                <div class="settings-actions">
+                    <button class="main-action" type="submit">保存 AI 设置</button>
+                    <button class="text-action" id="syncModelsButton" type="button">同步官方模型</button>
+                    <button class="text-action" id="testAiButton" type="button">测试连接</button>
+                </div>
+            </form>
+            <p class="upload-result" id="aiSettingsResult" role="status"></p>
+
+            <section class="model-manager" aria-labelledby="model-manager-title">
+                <header><h3 id="model-manager-title">模型列表</h3></header>
+                <div class="model-list" id="modelList"></div>
+                <form id="addModelForm" class="add-model-form">
+                    <label><span>模型标识</span><input id="customModelId" type="text" maxlength="100" placeholder="例如：deepseek-new-model" required></label>
+                    <label><span>显示名称</span><input id="customModelName" type="text" maxlength="100" placeholder="例如：DeepSeek 新模型" required></label>
+                    <fieldset><legend>支持档位</legend><label><input type="checkbox" name="customEffort" value="low" checked>low</label><label><input type="checkbox" name="customEffort" value="high" checked>high</label><label><input type="checkbox" name="customEffort" value="max" checked>max</label></fieldset>
+                    <button class="text-action" type="submit">添加模型</button>
+                </form>
+            </section>
+        </section>
+
+        <section class="content-section password-section" aria-labelledby="password-title">
+            <header class="section-heading"><h2 id="password-title">修改后台密码</h2></header>
+            <form id="passwordForm" class="settings-form password-form">
+                <label><span>当前密码</span><input id="currentAdminPassword" type="password" maxlength="256" autocomplete="current-password" required></label>
+                <label><span>新密码</span><input id="newAdminPassword" type="password" minlength="6" maxlength="128" autocomplete="new-password" required></label>
+                <label><span>确认新密码</span><input id="confirmAdminPassword" type="password" minlength="6" maxlength="128" autocomplete="new-password" required></label>
+                <div class="password-action"><button class="main-action" type="submit">更新后台密码</button></div>
+            </form>
+            <p class="upload-result" id="passwordResult" role="status"></p>
+        </section>
 
         <section class="content-section plan-section" aria-labelledby="plan-upload-title">
             <header class="section-heading"><h2 id="plan-upload-title">人才培养方案上传</h2></header>
@@ -77,6 +114,6 @@
     </section>
 </main>
 <div class="toast" id="adminToast" role="status" aria-live="polite"></div>
-<script src="static/js/credit-admin.js?v=20261006-security-1" defer></script>
+<script src="static/js/credit-admin.js?v=20261007-ai-4" defer></script>
 </body>
 </html>
